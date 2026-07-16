@@ -8,7 +8,7 @@ import Booking from "./components/Booking";
 import About from "./components/About";
 import Rides from "./components/Rides";
 import Contact from "./components/Contact";
-
+import Test_Section from "./components/Test_Section";
 import "./style.css";
 
 
@@ -77,6 +77,8 @@ function App() {
         )}
 
         <About />
+
+        <Test_Section />
 
         <Rides />
 

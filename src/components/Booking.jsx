@@ -2,6 +2,9 @@ import { useState, useEffect } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 
+
+import TimeSlot from "./TimeSlot";
+
 import {
   GoogleMap,
   Marker,
@@ -33,45 +36,40 @@ const defaultPickupLocation = {
 
 
 function Booking({ closeBooking }) {
-
-  /// time and date vars
-const minimumBookingTime = new Date();
-
-minimumBookingTime.setMinutes(
-  minimumBookingTime.getMinutes()
-);
-
-minimumBookingTime.setMinutes(
-  Math.ceil(minimumBookingTime.getMinutes() / 15) * 15
-);
-
-const [ pickupDateTime, setPickupDateTime ] = useState(minimumBookingTime);
+  
 
 
+    /// time and date vars
+  const minimumBookingTime = new Date();
+  minimumBookingTime.setMinutes(
+    minimumBookingTime.getMinutes()
+  );
+  minimumBookingTime.setMinutes(
+    Math.ceil(minimumBookingTime.getMinutes() / 15) * 15
+  );
 
 
-const startOfDay = new Date();
-startOfDay.setHours(16, 0, 0, 0);
-const endOfDay = new Date();
-endOfDay.setHours(23, 45, 0, 0);
+  // const startOfDay = new Date();
+  // startOfDay.setHours(16, 0, 0, 0);
+  // const endOfDay = new Date();
+  // endOfDay.setHours(23, 45, 0, 0);
+  // // time and date vars end
+
+  // time and date state
+  const [ pickupDateTime, setPickupDateTime ] = useState(minimumBookingTime);
+  const [ pickupTimeSelectorOpen, setPickupTimeSelectorOpen ] = useState(false);
+
+  // location state
+  const [ pickupLocation, setPickupLocation]  = useState( defaultPickupLocation );
+  const [ selectedDestinationCoordinates, setSelectedDestinationCoordinates ] = useState(null);
+  const [ destinationAutocompleteInstance, setDestinationAutocompleteInstance ] = useState(null);
+
+  // other state
+  const [ fare, setFare ] = useState(null);
+  const [ numberOfPedicabs, setNumberOfPedicabs ] = useState(1);
 
 
-const [pickupLocation, setPickupLocation] = useState( defaultPickupLocation );
-
-const [ selectedDestinationCoordinates, setSelectedDestinationCoordinates ] = useState(null);
-
- const [ destinationAutocompleteInstance, setDestinationAutocompleteInstance ] = useState(null);
-
- const [ fare, setFare ] = useState(null);
-
- const [ numberOfPedicabs, setNumberOfPedicabs ] = useState(1);
-
-
-
-
-
-  // Runs when the Google Maps Autocomplete component
-  // has finished creating its internal autocomplete object
+  // Runs when the Google Maps Autocomplete component has finished creating its internal autocomplete object
   function handleDestinationAutocompleteLoad(
     autocompleteInstance
   ) {
@@ -95,8 +93,7 @@ const [ selectedDestinationCoordinates, setSelectedDestinationCoordinates ] = us
     );
 
 
-    // Store the Google Autocomplete object in React state
-    // so other functions can use it later
+    // Store the Google Autocomplete object in React state so other functions can use it later
     setDestinationAutocompleteInstance(
       autocompleteInstance
     );
@@ -299,22 +296,33 @@ const [ selectedDestinationCoordinates, setSelectedDestinationCoordinates ] = us
             Pickup date and time: <br></br>
 
 
-<DatePicker
-  selected={pickupDateTime}
-  onChange={(date) => setPickupDateTime(date)}
-  showTimeSelect
-  timeIntervals={15}
-  minDate={minimumBookingTime}
-  timeCaption="Time"
-  minTime={
-    pickupDateTime &&
-    pickupDateTime.toDateString() === minimumBookingTime.toDateString()
-      ? minimumBookingTime
-      : startOfDay
-  }
-  maxTime={endOfDay}
-  dateFormat="dd/MM/yyyy h:mm aa"
-/>
+          {/* <DatePicker
+            selected={pickupDateTime}
+            onChange={(date) => setPickupDateTime(date)}
+            showTimeSelect
+            timeIntervals={15}
+            minDate={minimumBookingTime}
+            timeCaption="Time"
+            minTime={
+              pickupDateTime &&
+              pickupDateTime.toDateString() === minimumBookingTime.toDateString()
+                ? minimumBookingTime
+                : startOfDay
+            }
+            maxTime={endOfDay}
+            dateFormat="dd/MM/yyyy h:mm aa"
+          /> */}
+
+          <button onClick={() => setPickupTimeSelectorOpen(true)}  >
+            Pickup date and time
+          </button>
+
+         
+          {pickupTimeSelectorOpen && (
+  <TimeSlot
+    setPickupDateTime={setPickupDateTime}
+  />
+)}
 
 
           </label>
