@@ -279,3 +279,11 @@ button:hover {
   border-radius: 8px;
   background: #f8f9fb;
 }
+
+.booking-confirmed {
+  margin-top: 1rem;
+  padding: 1rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background: #f8f9fb;
+}

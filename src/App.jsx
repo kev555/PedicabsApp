@@ -56,32 +56,30 @@ function App() {
 
 
           <button
-            onClick={() => setBookingVisibility(!bookingVisibility)}
-            className={bookingVisibility ? "selected" : ""}
+            onClick={
+              () => setBookingVisibility(!bookingVisibility)
+              //"onClick will immediatly call React state setter function setBookingVisibility (defined above)
+              // toggling the bookingVisibility state and causing React to re-render
+            }
           >
-            {bookingVisibility ? "Cancel" : "Book a Ride"}
+            {bookingVisibility ? "Cancel" : "Book a Ride" // if booking panel is open change text to cancel so they know the button will also hide the booking panel
+            } 
           </button>
 
         </section>
 
-
-        {bookingVisibility && (
-          <Booking
-            closeBooking={() => setBookingVisibility(false)}
-          />
-          //"This function will immediatly call the React state setter function setBookingVisibility (defined above)
-          // changing the bookingVisibility state variable to false, which causes React to re-render.
-          // destructure it in the Booking component main function: function Booking({ closeBooking })
-          // Then use it at any Onclick etc in the Jsx at the bottom "return ()", just like a normal callback function and it will fire it
-          // <button onClick={closeBooking}> -> the syntax looks a bit wierder than normal callback, because it's jsx (... mix of html and js)
+        
+        {bookingVisibility && ( <Booking closeBooking={() => setBookingVisibility(false)} />
+          // show/hide the booking component,
+          // also pass down, as a "prop", a function for the child component to close itslef
+          // the reason we send it as an already set up function is to "to control what the child component is allowed to do"
+          // "Booking is only allowed to close itself, it doesn't need to know how visibility is managed."
+          
         )}
 
         <About />
-
-        <Test_Section />
-
+        {/* <Test_Section /> */}
         <Rides />
-
         <Contact />
 
       </main>

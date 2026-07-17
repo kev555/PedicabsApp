@@ -4,12 +4,14 @@ import "react-datepicker/dist/react-datepicker.css";
 
 
 import TimeSlot from "./TimeSlot";
-
 import {
   GoogleMap,
   Marker,
   Autocomplete
 } from "@react-google-maps/api";
+
+
+import { supabase } from "../supabase";
 
 
 const mapContainerStyle = {
@@ -34,29 +36,95 @@ const defaultPickupLocation = {
   lng: 145.7763
 };
 
+    // not necessary anymore
+    // // Fake database response.     // Later this will come from your backend/Supabase.     // These are currently booked pickup times.
+    // const bookedSlots = [
+    //     "2026-07-19T19:00",
+    //     "2026-07-22T20:15"
+    // ];
 
-function Booking({ closeBooking }) {
+
+function Booking({ closeBooking }) { // "destructure" closeBooking neatly
+
+  const [bookedSlots, setBookedSlots] = useState([]);
+  const [showCustomerDetails, setShowCustomerDetails] = useState(false);
+  const [customerName, setCustomerName] = useState("");
+
+
+
+  const [bookingConfirmed, setBookingConfirmed] = useState(false);
+
+
+  //////////////////////////////////////////////////////////////
+
+async function confirmBooking() {
+
+  const { error } = await supabase
+    .from("bookings")
+    .insert([
+      {
+        pickup_time: pickupDateTime,
+        customer_name: customerName,
+        status: "confirmed"
+      }
+    ]);
+
+  if (error) {
+    console.log(error);
+    return;
+  }
+
+  setBookingConfirmed(true);
+}
+
+
+///////////////////////////////////////////////////
+
+
+
+
+
+  useEffect(() => {
+    async function loadBookings() {
+      const { data, error } = await supabase
+        .from("bookings")
+        .select("pickup_time");
+
+      if (error) {
+        console.log(error);
+        return;
+      }
+
+      setBookedSlots(
+        data.map(booking =>
+          booking.pickup_time.slice(0,16)
+        )
+      );
+    }
+    loadBookings();
+  }, []);
   
 
+  // Obviously it;s important that this is initalized (scoped) in the Booking.jsx parent and passed down as a prop to TimeSlot.jsx
+  const [ pickupDateTime, setPickupDateTime ] = useState(null);
 
-    /// time and date vars
-  const minimumBookingTime = new Date();
-  minimumBookingTime.setMinutes(
-    minimumBookingTime.getMinutes()
-  );
-  minimumBookingTime.setMinutes(
-    Math.ceil(minimumBookingTime.getMinutes() / 15) * 15
-  );
-
-
+  // This stuff will done in the TimeSlot.jsx directly now, so these are redundant: 
+  //   /// time and date vars
+  // const minimumBookingTime = new Date();
+  // minimumBookingTime.setMinutes(
+  //   minimumBookingTime.getMinutes()
+  // );
+  // minimumBookingTime.setMinutes(
+  //   Math.ceil(minimumBookingTime.getMinutes() / 15) * 15
+  // );
   // const startOfDay = new Date();
   // startOfDay.setHours(16, 0, 0, 0);
   // const endOfDay = new Date();
   // endOfDay.setHours(23, 45, 0, 0);
   // // time and date vars end
 
-  // time and date state
-  const [ pickupDateTime, setPickupDateTime ] = useState(minimumBookingTime);
+
+  // Boking panel toggle:
   const [ pickupTimeSelectorOpen, setPickupTimeSelectorOpen ] = useState(false);
 
   // location state
@@ -70,10 +138,7 @@ function Booking({ closeBooking }) {
 
 
   // Runs when the Google Maps Autocomplete component has finished creating its internal autocomplete object
-  function handleDestinationAutocompleteLoad(
-    autocompleteInstance
-  ) {
-
+  function handleDestinationAutocompleteLoad( autocompleteInstance ) {
     const cairnsServiceAreaObject =
       new window.google.maps.LatLngBounds(
         {
@@ -86,17 +151,10 @@ function Booking({ closeBooking }) {
         }
       );
 
-
     // Tell Google Autocomplete to prefer Cairns results
-    autocompleteInstance.setBounds(
-      cairnsServiceAreaObject
-    );
-
-
+    autocompleteInstance.setBounds(cairnsServiceAreaObject);
     // Store the Google Autocomplete object in React state so other functions can use it later
-    setDestinationAutocompleteInstance(
-      autocompleteInstance
-    );
+    setDestinationAutocompleteInstance(autocompleteInstance );
 
   }
 
@@ -123,8 +181,6 @@ function Booking({ closeBooking }) {
     }
 
   }
-
-  
 
   function calculateFare( selectedDestinationCoordinates, numberOfPedicabs)
   {
@@ -175,17 +231,14 @@ function Booking({ closeBooking }) {
 
   }
 
-
   // is full expination of useeffect at the bottom of this file, read it
   useEffect(() => {
 
     if (selectedDestinationCoordinates) {
-
       calculateFare(
         selectedDestinationCoordinates,
         numberOfPedicabs
       );
-
     }
 
   }, [
@@ -206,8 +259,9 @@ function Booking({ closeBooking }) {
       <h2>Choose your destination</h2>
 
       <p>
-        Starting point:
-        <strong> Cairns Esplanade</strong>
+        Starting Point:
+        <strong> La Pizza Restaurant, Cairns Esplanade </strong><br></br>
+        (Custom start points coming soon)
       </p>
 
 
@@ -296,7 +350,7 @@ function Booking({ closeBooking }) {
             Pickup date and time: <br></br>
 
 
-          {/* <DatePicker
+          {/* <DatePicker /// old - delete!!!!!!!!!!
             selected={pickupDateTime}
             onChange={(date) => setPickupDateTime(date)}
             showTimeSelect
@@ -319,10 +373,11 @@ function Booking({ closeBooking }) {
 
          
           {pickupTimeSelectorOpen && (
-  <TimeSlot
-    setPickupDateTime={setPickupDateTime}
-  />
-)}
+            <TimeSlot
+              setPickupDateTime={setPickupDateTime}
+              bookedSlots={bookedSlots}
+            />
+          )}
 
 
           </label>
@@ -330,14 +385,65 @@ function Booking({ closeBooking }) {
           <br></br>
 
 
-      <button>
-        Continue
-      </button>
+      <button onClick={closeBooking}> Cancel </button>
+      {/*  the onClick syntax looks a bit wierder than normal callback, because it's jsx*/}
+
+      <button onClick={() => setShowCustomerDetails(true)}> Continue </button>
+
+      {showCustomerDetails && (
+        <div className="booking-box">
+
+          <h3>Your name</h3>
+
+          <input
+            type="text"
+            placeholder="Enter your name"
+            value={customerName}
+            onChange={(e) => setCustomerName(e.target.value)}
+          />
+
+        </div>
+      )}
+      
+
+      {showCustomerDetails && !bookingConfirmed && (
+
+        <button
+          onClick={confirmBooking}
+          disabled={!customerName || !pickupDateTime}
+        >
+          Confirm Booking
+        </button>
+
+      )}
+
+      {bookingConfirmed && (
+
+  <div className="booking-confirmed">
+
+    <h3>Booking Confirmed!</h3>
+
+    <p>
+      Thanks {customerName}, your pedicab has been booked for{" "}
+      {new Date(pickupDateTime).toLocaleString("en-AU", {
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+      })}
+    </p>
+
+    <button onClick={() => window.location.href = "/"}>
+      Go Home
+    </button>
+
+  </div>
+
+)}
 
 
-      <button onClick={closeBooking}>
-        Cancel
-      </button>
 
     </section>
 
