@@ -1,9 +1,17 @@
-function Rides() {
-
+function About() {
 
   return (
 
-    <section className="content-box" id="rides">
+    <section className="content-box" id="about">
+
+      <h2>About Us</h2>
+
+
+      <p>
+        Cairns Pedicabs offers comfortable, personal transport around the city.
+        Perfect for tourists, events, evenings out, and anyone wanting a unique
+        Cairns experience.
+      </p>
 
 
       <h2>Our Rides</h2>
@@ -36,7 +44,6 @@ function Rides() {
 
 
 
-
         <article className="card">
 
           <h3>Events</h3>
@@ -51,11 +58,14 @@ function Rides() {
       </div>
 
 
+
     </section>
+
+    
 
   );
 
 }
 
 
-export default Rides;
+export default About;

@@ -1,102 +1,55 @@
 import { useState } from "react";
+import { BrowserRouter, Link, Routes, Route } from "react-router-dom";
+import { LoadScript } from "@react-google-maps/api";
 
-import {
-  LoadScript
-} from "@react-google-maps/api";
-
-import Booking from "./components/Booking";
-import About from "./components/About";
-import Rides from "./components/Rides";
-import Contact from "./components/Contact";
-import Test_Section from "./components/Test_Section";
+import FareCalculator from "./pages/FareCalculator";
+import Booking from "./pages/Booking";
+import About from "./pages/About";
+import Contact from "./pages/Contact";
 import "./style.css";
 
+const libraries = ["places"];
 
 function App() {
+    const [bookingVisibility, setBookingVisibility] = useState(false);
+    // React state variable bookingVisibility and setter function setBookingVisibility
+    // Only ever modify bookingVisibility with setBookingVisibility
 
-  const [bookingVisibility, setBookingVisibility] = useState(false);
-  // React state variable bookingVisibility and setter function setBookingVisibility
-  // Only ever modify bookingVisibility with setBookingVisibility
+    return (
+        <BrowserRouter>
+            <LoadScript googleMapsApiKey={import.meta.env.VITE_GOOGLE_MAPS_KEY} libraries={[libraries]}>
+              <div className="app">
+                
+                <header className="site-header">
+                    <img src="/images/logo.png" alt="Cairns Pedicabs logo" className="logo" />
+                </header>
 
+                <nav className="site-nav">
+                    <Link to="/">Welcome</Link>
+                    <Link to="/FareCalculator">Fare Calculator</Link>
+                    <Link to="/Booking">Book Now</Link>
+                    <Link to="/contact">Contact</Link>
+                </nav>
 
-  return (
-
-    <LoadScript
-      googleMapsApiKey={import.meta.env.VITE_GOOGLE_MAPS_KEY}
-      libraries={["places"]}
-    >
-
-      <header className="site-header">
-        <img
-          src="/images/logo.png"
-          alt="Cairns Pedicabs logo"
-          className="logo"
-        />
-      </header>
-
-
-      <nav className="site-nav">
-        <a href="#book">Book</a>
-        <a href="#about">About</a>
-        <a href="#rides">Rides</a>
-        <a href="#contact">Contact</a>
-      </nav>
-
-
-      <main>
-
-        <section className="content-box" id="book">
-
-          <h2>Book a Ride</h2>
-
-          <p>
-            Relax, enjoy the breeze, and let us take you around Cairns CBD,
-            the Esplanade and nearby attractions.
-          </p>
+                <main>
+                    <Routes>
+                        <Route path="/" element={<About />} />
+                        <Route path="/Booking" element={<Booking />} />
+                        <Route path="/FareCalculator" element={<FareCalculator />} />
+                        <Route path="/Contact" element={<Contact />} />
+                    </Routes>
+                </main>
 
 
-          <button
-            onClick={
-              () => setBookingVisibility(!bookingVisibility)
-              //"onClick will immediatly call React state setter function setBookingVisibility (defined above)
-              // toggling the bookingVisibility state and causing React to re-render
-            }
-          >
-            {bookingVisibility ? "Cancel" : "Book a Ride" // if booking panel is open change text to cancel so they know the button will also hide the booking panel
-            } 
-          </button>
+                <footer className="site-footer">
+                    <p>© 2026 Cairns Pedicabs</p>
+                </footer>
+                
+              </div>
 
-        </section>
-
-        
-        {bookingVisibility && ( <Booking closeBooking={() => setBookingVisibility(false)} />
-          // show/hide the booking component,
-          // also pass down, as a "prop", a function for the child component to close itslef
-          // the reason we send it as an already set up function is to "to control what the child component is allowed to do"
-          // "Booking is only allowed to close itself, it doesn't need to know how visibility is managed."
-          
-        )}
-
-        <About />
-        {/* <Test_Section /> */}
-        <Rides />
-        <Contact />
-
-      </main>
-
-
-      <footer className="site-footer">
-
-        <p>
-          © 2026 Cairns Pedicabs
-        </p>
-
-      </footer>
-
-    </LoadScript>
-
-  );
+            </LoadScript>
+        </BrowserRouter>
+    );
 }
-
 
 export default App;
