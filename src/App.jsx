@@ -1,9 +1,8 @@
 import { useState } from "react";
-import { BrowserRouter, Link, Routes, Route } from "react-router-dom";
+import { BrowserRouter, NavLink, Routes, Route } from "react-router-dom";
 import { LoadScript } from "@react-google-maps/api";
 
 import FareCalculator from "./pages/FareCalculator";
-import Booking from "./pages/Booking";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
 import "./style.css";
@@ -20,21 +19,19 @@ function App() {
             <LoadScript googleMapsApiKey={import.meta.env.VITE_GOOGLE_MAPS_KEY} libraries={[libraries]}>
               <div className="app">
                 
-                <header className="site-header">
-                    <img src="/images/logo.png" alt="Cairns Pedicabs logo" className="logo" />
+                <header className="logo-box">
+                  <img src="/images/logo.png" alt="Cairns Pedicab Logo" className="logo" />
                 </header>
 
-                <nav className="site-nav">
-                    <Link to="/">Welcome</Link>
-                    <Link to="/FareCalculator">Fare Calculator</Link>
-                    <Link to="/Booking">Book Now</Link>
-                    <Link to="/contact">Contact</Link>
+                <nav className="nav-container">
+                    <NavLink to="/" className={({ isActive }) => isActive ? "active" : ""}>Welcome</NavLink>
+                    <NavLink to="/farecalculator" className={({ isActive }) => isActive ? "active" : ""}>Calculate Fare & Book a Ride</NavLink>
+                    <NavLink to="/contact" className={({ isActive }) => isActive ? "active" : ""}>Contact</NavLink>
                 </nav>
 
                 <main>
                     <Routes>
                         <Route path="/" element={<About />} />
-                        <Route path="/Booking" element={<Booking />} />
                         <Route path="/FareCalculator" element={<FareCalculator />} />
                         <Route path="/Contact" element={<Contact />} />
                     </Routes>

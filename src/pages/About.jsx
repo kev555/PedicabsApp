@@ -4,17 +4,17 @@ function About() {
 
     <section className="content-box" id="about">
 
-      <h2>About Us</h2>
+      <h2 className="page-heading">About Us</h2>
 
 
-      <p>
+      <p className="page-intro">
         Cairns Pedicabs offers comfortable, personal transport around the city.
         Perfect for tourists, events, evenings out, and anyone wanting a unique
         Cairns experience.
       </p>
 
 
-      <h2>Our Rides</h2>
+      <h2 className="section-heading">Our Rides</h2>
 
 
       <div className="card-container">
