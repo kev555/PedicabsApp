@@ -1,0 +1,32 @@
+[
+  {
+    "name": "Casino",
+    "address": "The Reef Hotel Casino, Cairns QLD",
+    "geometry": { "location": { "lat": -16.9242, "lng": 145.7797 } }
+  },
+  {
+    "name": "La Pizza",
+    "address": "La Pizza Trattoria, Cairns QLD",
+    "geometry": { "location": { "lat": -16.9185, "lng": 145.7779 } }
+  },
+  {
+    "name": "Gilligans",
+    "address": "Gilligan's Hotel & Resort, Cairns QLD",
+    "geometry": { "location": { "lat": -16.9247, "lng": 145.7744 } }
+  },
+  {
+    "name": "Pj O'Briens",
+    "address": "P.J.O'Brien's Irish Pub, Cairns QLD",
+    "geometry": { "location": { "lat": -16.9231, "lng": 145.7766 } }
+  },
+  {
+    "name": "Macdonalds",
+    "address": "McDonald's Cairns Esplanade, Cairns QLD",
+    "geometry": { "location": { "lat": -16.9189, "lng": 145.7774 } }
+  },
+  {
+    "name": "Pier Bar",
+    "address": "The Pier Bar, Cairns QLD",
+    "geometry": { "location": { "lat": -16.9213, "lng": 145.7801 } }
+  }
+]

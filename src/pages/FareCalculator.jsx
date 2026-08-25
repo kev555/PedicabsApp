@@ -1,11 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { GoogleMap, Marker, Autocomplete } from "@react-google-maps/api";
 
-import AutocompleteForCairns from "../components/AutocompleteForCairns";
 import Booking from "./Booking";
-
-// move it to components dir in after testing
-// import Booking from "../components/Booking";
+import QUICK_LOCATIONS_json from './locations.json';
 
 const mapContainerStyle = {
     width: "90%",
@@ -23,8 +20,8 @@ const cairnsServiceArea = {
 };
 
 const mapCenterCoordinates = {
-    lat: (cairnsServiceArea.south + cairnsServiceArea.north) / 2,
-    lng: (cairnsServiceArea.west + cairnsServiceArea.east) / 2
+    lat: -16.921,   // more = lower
+    lng: 145.77     // more = right
 };
 
 function FareCalculator() {
@@ -33,50 +30,132 @@ function FareCalculator() {
     const [pickupSelected, setPickupSelected] = useState(false);
     const [destinationCoordinates, setDestinationCoordinatesFunc] = useState(null);
     const [numberOfPedicabs, setNumberOfPedicabs] = useState(1);
-    const [fare, setFare] = useState(null);
+    const [baseFare, setBaseFare] = useState(null);
 
     // and one to load in booking.jsx component div
     const [bookingVisible, setBookingVisible] = useState(false);
 
-    function handlePickupInputChange(value) {
+    // Refs for the two separate Google Autocomplete instances
+    const pickupAutocompleteInstanceRef = useRef(null);
+    const destinationAutocompleteInstanceRef = useRef(null);
+
+    // Ref for the actual destination input element
+    const destinationInputRef = useRef(null);
+
+    function checkIfInputEmpty(value) {
         if (!value.trim()) {
             setPickupSelected(false);
             setPickupCoordinatesFunc(null);
             setDestinationCoordinatesFunc(null);
-            setFare(null);
+
+            if (destinationInputRef.current) {
+                destinationInputRef.current.value = "";
+            }
+
+            setBaseFare(null);
         }
     }
 
-    // Get the coordinates of the destination selected by the user
-    function handleDestinationChanged() {
-        if (destinationAutocompleteInstance !== null) {
-            const selectedDestination = destinationAutocompleteInstance.getPlace();
+    function handleNumberOfPedicabsChange(number) {
+        setNumberOfPedicabs(number);
+    }
 
-            if (selectedDestination.geometry) {
-                setDestinationCoordinatesFunc({
-                    lat: selectedDestination.geometry.location.lat(),
-                    lng: selectedDestination.geometry.location.lng()
-                });
-            }
+    function handlePickupLocationSelected() {
+        setPickupSelected(true);
+    }
+
+    // If the user starts changing the destination after selecting a place, clear the previously selected destination and fare.
+    // But the text will remain in the input so they are free to reuse the tex/change it slightly and continue to get suggestions from Google Autocomplete.
+    // !!So...!! all this is doing is clearing the destination coordinates and fare state variables to null, not the input text itself.
+    // Also at first I thought this would cause a re-render on every character entered by the user, 
+    // but actually a re-render only happens when the state variables are different from last time 
+    // ie. setting an already null variable to null again does not cause a re-render. So no performance issues here.
+    function handleUserManuallyEditingDestination() {
+        setDestinationCoordinatesFunc(null);
+        setBaseFare(null);
+    }
+
+    function handleQuickLocationClick(location) {
+        if (!pickupSelected) {
+            window.alert("Choose Pick up location first");
+            return;
+        }
+
+        setDestinationCoordinatesFunc(location.geometry.location);
+
+        if (destinationInputRef.current) {
+            destinationInputRef.current.value = location.address;
         }
     }
 
-    function handlePickupChanged() {
-        if (pickupAutocompleteInstance !== null) {
-            const selectedPickup = pickupAutocompleteInstance.getPlace();
+    // Runs as soon as the pickup Autocomplete component loads via onLoad.
+    // Gets passed a new autocompleteInstance and sets the autocomplete bounds for it.
+    // Then stores it in the pickupAutocompleteInstanceRef - never a need to re-render the Google Autocomplete instance so use a Ref to store it.
 
-            if (selectedPickup.geometry) {
-                setPickupCoordinatesFunc({
-                    lat: selectedPickup.geometry.location.lat(),
-                    lng: selectedPickup.geometry.location.lng()
-                });
-            }
+    function handlePickupAutocompleteLoad(newAutocompleteInstance) {
+        const cairnsServiceAreaObject =
+            new window.google.maps.LatLngBounds(
+                { lat: cairnsServiceArea.south, lng: cairnsServiceArea.west },
+                { lat: cairnsServiceArea.north, lng: cairnsServiceArea.east }
+            );
+
+        newAutocompleteInstance.setBounds(cairnsServiceAreaObject);
+        pickupAutocompleteInstanceRef.current = newAutocompleteInstance;
+    }
+
+    // Runs when a pickup location is selected from the Google Autocomplete suggestions.
+    // Gets the selected place from the pickup Autocomplete instance and saves its coordinates.
+    function handlePickupPlaceChanged() {
+        if (!pickupAutocompleteInstanceRef.current) return;
+
+        const selectedPlace = pickupAutocompleteInstanceRef.current.getPlace();
+
+        if (selectedPlace.geometry) {
+            const selectedCoordinates = {
+                lat: selectedPlace.geometry.location.lat(),
+                lng: selectedPlace.geometry.location.lng()
+            };
+
+            setPickupCoordinatesFunc(selectedCoordinates);
+            handlePickupLocationSelected();
+        }
+    }
+
+    // Runs as soon as the destination Autocomplete component loads via onLoad.
+    // Gets passed a new autocompleteInstance and sets the autocomplete bounds for it.
+    // Then stores it in the destinationAutocompleteInstanceRef.
+    function handleDestinationAutocompleteLoad(newAutocompleteInstance) {
+        const cairnsServiceAreaObject =
+            new window.google.maps.LatLngBounds(
+                { lat: cairnsServiceArea.south, lng: cairnsServiceArea.west },
+                { lat: cairnsServiceArea.north, lng: cairnsServiceArea.east }
+            );
+
+        newAutocompleteInstance.setBounds(cairnsServiceAreaObject);
+        destinationAutocompleteInstanceRef.current = newAutocompleteInstance;
+    }
+
+    // Runs when a destination location is selected from the Google Autocomplete suggestions.
+    // Gets the selected place from the destination Autocomplete instance and saves its coordinates.
+    function handleDestinationPlaceChanged() {
+        if (!destinationAutocompleteInstanceRef.current) return;
+
+        const selectedPlace = destinationAutocompleteInstanceRef.current.getPlace();
+
+        if (selectedPlace.geometry) {
+            const selectedCoordinates = {
+                lat: selectedPlace.geometry.location.lat(),
+                lng: selectedPlace.geometry.location.lng()
+            };
+
+            setDestinationCoordinatesFunc(selectedCoordinates);
         }
     }
 
     // Calculate the fare using Google Maps driving distance
-    function calculateFare(pickupCoordinates, destinationCoordinates, numberOfPedicabs){    
+    function calculateFare(pickupCoordinates, destinationCoordinates) {
         const distanceService = new window.google.maps.DistanceMatrixService();
+
         distanceService.getDistanceMatrix(
             {
                 origins: [pickupCoordinates],
@@ -89,57 +168,117 @@ function FareCalculator() {
                     const distanceInKilometres = distanceInMeters / 1000;
 
                     // Minimum $10 fare per pedicab
-                    const calculatedFare = Math.max(10, distanceInKilometres * 15) * numberOfPedicabs;
+                    const calculatedBaseFare = Math.max(10, distanceInKilometres * 15);
 
-                    setFare(calculatedFare.toFixed(2));
+                    setBaseFare(calculatedBaseFare);
                 }
             }
         );
     }
 
-    // Run calculateFare function every time destination, pickup or number of pedicabs are changed
+    const QUICK_LOCATIONS = QUICK_LOCATIONS_json;
+
+    // totalFare is a normal variable, so it is recalculated during every render.
+    // It uses the current data from the persistent state variables baseFare and numberOfPedicabs, which is why it always reflects the latest total.
+    // It does not need to be state itself because it is fully derived from them and does not need to be stored independently between renders.
+    // I was previously recalculating the baseFare state variable, but there was no need as the distance wasn't changing
+    // Now the totalFare is just a normal variable that is recalculated each render using the baseFare
+    const totalFare = baseFare === null
+        ? null
+        : (baseFare * numberOfPedicabs).toFixed(2);
+
     useEffect(() => {
-        if (pickupCoordinates && destinationCoordinates) {
-            calculateFare(pickupCoordinates, destinationCoordinates, numberOfPedicabs);
-        }
-    }, [pickupCoordinates, destinationCoordinates, numberOfPedicabs]);
+        console.log("useEffect ran");
+
+        if (!pickupCoordinates || !destinationCoordinates) return; // Ignore initial and subsequent loads if coordinates are empty
+
+        console.log("useEffect ran AND passed checks");
+
+        calculateFare(pickupCoordinates, destinationCoordinates); // Runs only when both coordinates are actually populated
+
+    }, [pickupCoordinates, destinationCoordinates]);
 
     return (
         <section className="content-box">
 
-            <div className="location-selection-layout">
-                <section className="manual-location-panel" aria-labelledby="manual-location-title">
-                    <h2 id="manual-location-title" className="location-shortcuts-title">Select pick up and drop off locations</h2>
-                    <div className="location-inputs">
-                        <AutocompleteForCairns
-                            placeholder="Enter Pick Up Location.."
-                            coordinatesStateSetterFunc={setPickupCoordinatesFunc}
-                            onLocationSelected={() => setPickupSelected(true)}
-                            onInputChange={handlePickupInputChange}
-                        />
+            <div className="location-section-parent">
+                <section className="manual-location-panel">
+                    <h2 className="manual-location-panel-title">Select pick up and drop off locations</h2>
 
-                        <AutocompleteForCairns
-                            placeholder="Enter Drop Off Location.."
-                            coordinatesStateSetterFunc={setDestinationCoordinatesFunc}
-                            disabled={!pickupSelected}
-                        />
+                    <div className="manual-location-panel-inputs">
+
+                        <div>
+                            <Autocomplete
+                                onLoad={handlePickupAutocompleteLoad}
+                                onPlaceChanged={handlePickupPlaceChanged}
+                                options={{
+                                    componentRestrictions: { country: "au" },
+                                    bounds: cairnsServiceArea,
+                                    strictBounds: true
+                                }}
+                            >
+                                <input
+                                    type="text"
+                                    className="custom-input"
+                                    placeholder="Enter Pick Up Location.."
+                                    onChange={(event) => checkIfInputEmpty(event.target.value)}
+                                />
+                            </Autocomplete>
+                        </div>
+
+                        <div>
+                            <Autocomplete
+                                onLoad={handleDestinationAutocompleteLoad}
+                                onPlaceChanged={handleDestinationPlaceChanged}
+                                options={{
+                                    componentRestrictions: { country: "au" },
+                                    bounds: cairnsServiceArea,
+                                    strictBounds: true
+                                }}
+                            >
+                                {/* Google's Autocomplete instance doesn't provide a nice official setInputValue() method if i want to have quick select buttons 
+                                    that auto input a destination in the Autocomplete input - I need to manage it myself, either with:
+
+                                    React state:
+                                    value={destinationInputValue}
+                                    onChange={(event) => handleDestinationInputChange(event.target.value)} 
+                                    And then use setDestinationInputValue("new value") to set it programmatically. The downside is that it will re-render the component every time the input value changes, which is unnecessary and can be inefficient.
+                                    And in general it just makes things very sticky like the text is constantly being re-rendered and reset to the state value, which is not ideal for a user typing in an input. So I chose the ref method instead.
+
+                                    or
+                                    
+                                    A ref:
+                                    ref={destinationInputRef}
+                                    and then use destinationInputRef.current.value = "new value" to set it programmatically. I chose the ref method because it is simpler and avoids unnecessary re-renders of the component when the input value changes. The downside is that I have to manage the input value manually, but in this case, it's a reasonable trade-off. Also, I can still use the onChange event to detect when the user types in the input and clear the destination coordinates if they start typing a new destination, the Google Autocomplete will then take over and provide suggestions again as the user types, like before.
+                                    */}
+                                <input
+                                    ref={destinationInputRef}
+                                    type="text"
+                                    className="custom-input"
+                                    placeholder="Enter Drop Off Location.."
+                                    disabled={!pickupSelected}
+                                    onChange={handleUserManuallyEditingDestination}
+                                />
+                            </Autocomplete>
+                        </div>
+
                     </div>
                 </section>
 
-                <section className="location-shortcuts" aria-labelledby="location-shortcuts-title">
-                    <h2 id="location-shortcuts-title" className="location-shortcuts-title">Quick pick popular locations</h2>
-                    <div className="location-shortcut-options">
-                        {["Pick up 1", "Pick up 2", "Pick up 3", "Pick up 4", "Drop off 1", "Drop off 2", "Drop off 3", "Drop off 4"].map((location) => {
-                            const isDropOff = location.startsWith("Drop off");
+                <section className="quick-locations-panel">
+                    <h2 className="quick-locations-panel-title">Popular Destinations</h2>
 
+                    <div className="quick-locations-panel-options">
+                        {QUICK_LOCATIONS.map((loc) => {
                             return (
                                 <button
-                                    key={location}
+                                    key={loc.name}
                                     type="button"
-                                    className="location-shortcut-button"
-                                    disabled={isDropOff && !pickupSelected}
+                                    title={loc.name}
+                                    className="quick-locations-panel-button"
+                                    onClick={() => handleQuickLocationClick(loc)}
                                 >
-                                    {location}
+                                    {loc.name}
                                 </button>
                             );
                         })}
@@ -148,65 +287,82 @@ function FareCalculator() {
             </div>
 
             <div className="map-frame">
-                <GoogleMap 
-                    mapContainerStyle={mapContainerStyle} 
-                    center={pickupCoordinates || mapCenterCoordinates} 
-                    zoom={15}
-                    options={{ mapTypeControl: false, streetViewControl: false, fullscreenControl: false }}
+                <GoogleMap
+                    mapContainerStyle={mapContainerStyle}
+                    center={pickupCoordinates || mapCenterCoordinates}
+                    zoom={14}
+                    options={{
+                        mapTypeControl: false,
+                        streetViewControl: false,
+                        fullscreenControl: false,
+                    }}
                 >
                     {pickupCoordinates && <Marker position={pickupCoordinates} label="Pick Up" />}
 
-                    { destinationCoordinates && <Marker position={destinationCoordinates} label="Drop Off" /> }
+                    {destinationCoordinates && <Marker position={destinationCoordinates} label="Drop Off" />}
                 </GoogleMap>
             </div>
 
-            <div className="fare-selection-layout">
-                <div className="fare-summary" aria-live="polite">
-                    <div className="fare-summary-copy">
-                        <div className="fare-summary-header">
-                            <span className="fare-summary-title">Estimated fare</span>
-                        </div>
-                        <p className="fare-summary-detail">
-                            {fare
-                                ? `${numberOfPedicabs} ${numberOfPedicabs === 1 ? "pedicab" : "pedicabs"}`
-                                : "Select pick up and drop off locations first*"}
+            <div className="fare-calculation-section">
+                <div className="fare-cost">
+                    <div className="fare-cost-left-subbox">
+                        <div className="fare-cost-left-subbox-title">Total Fare:</div>
+
+                        <p className="fare-cost-left-subbox-detail">
+                            {
+                                totalFare
+                                    ? numberOfPedicabs + " " + (numberOfPedicabs === 1 ? "pedicab" : "pedicabs")
+                                    : "Select pick up and drop off first"
+                            }
                         </p>
-                        <p className="fare-summary-note">$10 minimum per pedicab</p>
                     </div>
-                    <p className="fare-amount">{fare ? `$${fare}` : "--"}</p>
+
+                    <div className="fare-cost-right-subbox">
+                        {totalFare ? "$" + totalFare : <span className="fare-placeholder">     _ _</span>}
+
+                        <p className="fare-cost-right-subbox-note">
+                            {baseFare !== null && baseFare < 10.05 ? "($10 min charge per cab)" : ""}
+                        </p>
+                    </div>
                 </div>
 
-                <div className="pedicab-selector" role="group" aria-labelledby="pedicab-selector-title">
-                    <div id="pedicab-selector-title" className="pedicab-selector-title">How many pedicabs?</div>
-                    <div className="pedicab-options" role="group" aria-label="Number of pedicabs">
+                <div className="pedicab-amount-selector">
+                    <div className="pedicab-amount-selector-title">
+                        How many pedicabs?
+                    </div>
+
+                    <div className="pedicab-amount-selector-buttons">
                         {[1, 2, 3, 4].map((number) => (
                             <button
                                 key={number}
                                 type="button"
-                                onClick={() => setNumberOfPedicabs(number)}
+                                onClick={() => handleNumberOfPedicabsChange(number)}
                                 className={numberOfPedicabs === number ? "selected" : ""}
-                                aria-pressed={numberOfPedicabs === number}
                             >
-                                <span className="pedicab-number">{number}</span>
+                                {number}
                             </button>
                         ))}
                     </div>
                 </div>
             </div>
 
-            <button className="book-ride-button" onClick={() => setBookingVisible(true)}>
+            <button
+                className="book-ride-button"
+                onClick={() => setBookingVisible(true)}
+            >
                 Book this ride
             </button>
 
             {bookingVisible && (
                 <Booking
                     closeBooking={() => setBookingVisible(false)}
-                    fare={fare}
+                    fare={totalFare}
                     numberOfPedicabs={numberOfPedicabs}
                 />
             )}
-            <br/>
-            <br/>
+
+            <br />
+            <br />
         </section>
     );
 }

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef } from "react";
 import { Autocomplete } from "@react-google-maps/api";
 
 const cairnsServiceArea = {
@@ -10,20 +10,13 @@ const cairnsServiceArea = {
 
 // coordinatesStateSetterFunccan be either the setPickupCoordinates or setDestinationCoordinates state function
 
-function AutocompleteForCairns({
-    placeholder,
-    coordinatesStateSetterFunc,
-    disabled = false,
-    onLocationSelected,
-    onInputChange
-}) {
-    const [autocompleteInstance, setAutocompleteInstance] = useState(null); // i think i should use a ref for this? or maybe that was for something elese?
+function AutocompleteForCairns({ placeholder, coordinatesStateSetterFunc, disabled = false, onLocationSelected, onInputChange, value }) 
+{
+    // although this ref wont save a re-render because the locations vaiables themselfs are state, is still good as Separation of Render Data vs. Instance Data
+    const autocompleteInstanceRef = useRef(null);
 
-    // Runs as soon as the component loads via onLoad.
-    // Gets passed a new autocompleteInstance and sets the autocomplete bounds for it
-    // Then stores it in the state variable autocompleteInstance
-    // FareCalculator.jsx uses it for both the destination and pickup:
-
+    // Runs as soon as the component loads via onLoad. Gets passed a new autocompleteInstance and sets the autocomplete bounds for it
+    // Then stores it in the ref autocompleteInstanceRef. FareCalculator.jsx uses it for both the destination and pickup:
     function handleAutocompleteLoad(newAutocompleteInstance) {
         const cairnsServiceAreaObject =
             new window.google.maps.LatLngBounds(
@@ -31,24 +24,26 @@ function AutocompleteForCairns({
                 { lat: cairnsServiceArea.north, lng: cairnsServiceArea.east }
             );
         newAutocompleteInstance.setBounds(cairnsServiceAreaObject);
-        setAutocompleteInstance(newAutocompleteInstance);
+        autocompleteInstanceRef.current = newAutocompleteInstance;
     }
 
     // Get the coordinates of the selected location
     function handlePlaceChanged() {
-        if (!autocompleteInstance) return;
-        const selectedPlace = autocompleteInstance.getPlace();
+        if (!autocompleteInstanceRef.current) return;
+        const selectedPlace = autocompleteInstanceRef.current.getPlace();
         if (selectedPlace.geometry) {
-            coordinatesStateSetterFunc({
+            const selectedCoordinates = {
                 lat: selectedPlace.geometry.location.lat(),
                 lng: selectedPlace.geometry.location.lng()
-            });
-            onLocationSelected?.();
+            };
+
+            coordinatesStateSetterFunc(selectedCoordinates);
+            onLocationSelected?.(selectedCoordinates, selectedPlace.formatted_address || selectedPlace.name || "");
         }
     }
 
     return (
-        <div className="location-field">
+        <div>
             <Autocomplete
                 onLoad={handleAutocompleteLoad}
                 onPlaceChanged={handlePlaceChanged}
@@ -63,10 +58,11 @@ function AutocompleteForCairns({
                     className="custom-input"
                     placeholder={placeholder}
                     disabled={disabled}
+                    value={value}
                     onChange={(event) => onInputChange?.(event.target.value)}
                 />
             </Autocomplete>
-            </div>
+        </div>
     );
 }
 

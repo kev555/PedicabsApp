@@ -24,7 +24,7 @@ function App() {
                 </header>
 
                 <nav className="nav-container">
-                    <NavLink to="/" className={({ isActive }) => isActive ? "active" : ""}>Welcome</NavLink>
+                    <NavLink to="/" className={({ isActive }) => isActive ? "active" : ""}>About</NavLink>
                     <NavLink to="/farecalculator" className={({ isActive }) => isActive ? "active" : ""}>Calculate Fare & Book a Ride</NavLink>
                     <NavLink to="/contact" className={({ isActive }) => isActive ? "active" : ""}>Contact</NavLink>
                 </nav>
