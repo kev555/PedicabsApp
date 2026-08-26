@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-function TimeSlot({ bookedSlots, setPickupDateTime }) {
+function TimeSlot({ bookedSlots, setPickupDateTime, pickupAddress, destinationAddress, fare, numberOfPedicabs }) {
     // React remembers these values between renders.
     const [selectedDate, setSelectedDate] = useState(null);
     const [selectedTime, setSelectedTime] = useState(null);
@@ -70,9 +70,14 @@ function TimeSlot({ bookedSlots, setPickupDateTime }) {
     const timeSlots = selectedDate ? generateTimeSlots(selectedDate) : [];
 
     return (
-        <section className="content-box">
-            <h2>Test Booking Picker</h2>
-            <h3>Select a date</h3>
+        <section className="time-slot-panel">
+            <div className="time-slot-heading">
+                <span>01</span>
+                <div>
+                    <h3>Select a date</h3>
+                    <p>Choose a day within the next two weeks.</p>
+                </div>
+            </div>
 
             <div className="date-grid">
                 {dates.map((date) => (
@@ -93,7 +98,13 @@ function TimeSlot({ bookedSlots, setPickupDateTime }) {
 
             {selectedDate && (
                 <>
-                    <h3>Select a pickup time</h3>
+                    <div className="time-slot-heading time-slot-heading-followup">
+                        <span>02</span>
+                        <div>
+                            <h3>Select a pickup time</h3>
+                            <p>Available times update as bookings are made.</p>
+                        </div>
+                    </div>
                     <div className="time-grid">
                         {timeSlots.map((slot) => (
                             <button
@@ -116,9 +127,16 @@ function TimeSlot({ bookedSlots, setPickupDateTime }) {
             )}
 
             {selectedDate && selectedTime && (
-                <div className="booking-summary">
-                    <h3>Booking Summary</h3>
-                    <p>
+                <div className="your-order-section">
+                    <span className="your-order-section-label">Your order</span>
+                    <div className="your-order-section-details">
+                        <span>{numberOfPedicabs} {numberOfPedicabs === 1 ? "pedicab" : "pedicabs"}</span>
+                    </div>
+                    <div className="your-order-section-route">
+                        <span><b>From</b><span>{pickupAddress}</span></span>
+                        <span><b>To</b><span>{destinationAddress}</span></span>
+                    </div>
+                    <p className="your-order-section-date">
                         {new Date(selectedTime).toLocaleString("en-AU", {
                             weekday: "long",
                             day: "numeric",
@@ -128,6 +146,7 @@ function TimeSlot({ bookedSlots, setPickupDateTime }) {
                             hour12: true
                         })}
                     </p>
+                    {fare && <strong className="your-order-section-fare">${fare}</strong>}
                 </div>
             )}
         </section>

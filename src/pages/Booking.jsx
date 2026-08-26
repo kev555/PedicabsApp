@@ -3,11 +3,10 @@ import "react-datepicker/dist/react-datepicker.css";
 import TimeSlot from "../components/TimeSlot";
 import { supabase } from "../supabase";
 
-function Booking({ closeBooking, fare, numberOfPedicabs }) {
+function Booking({ closeBooking, fare, numberOfPedicabs, pickupAddress, destinationAddress }) {
 
     const [bookedSlots, setBookedSlots] = useState([]);
     const [pickupDateTime, setPickupDateTime] = useState(null);
-    const [pickupTimeSelectorOpen, setPickupTimeSelectorOpen] = useState(false);
 
     const [showCustomerDetails, setShowCustomerDetails] = useState(false);
     const [customerName, setCustomerName] = useState("");
@@ -48,29 +47,54 @@ function Booking({ closeBooking, fare, numberOfPedicabs }) {
     }
 
     return (
-        <section className="content-box">
+        <section className="content-box booking-flow">
+            <div className="booking-flow-header">
+                <div className="your-ride-section">
+                    <span className="your-ride-section-label">Your ride</span>
+                    <div className="your-ride-section-details">
+                        <span>{numberOfPedicabs} {numberOfPedicabs === 1 ? "pedicab" : "pedicabs"}</span>
+                    </div>
+                    <div className="your-ride-section-route">
+                        <span><b>From</b><span>{pickupAddress}</span></span>
+                        <span><b>To</b><span>{destinationAddress}</span></span>
+                    </div>
+                </div>
+                <h2>Choose a pickup date and time</h2>
+            </div>
 
-            <button onClick={() => setPickupTimeSelectorOpen(true)} > Select Pickup Date/Time </button>
-
-            {pickupTimeSelectorOpen && (
-                <TimeSlot
-                    setPickupDateTime={setPickupDateTime}
-                    bookedSlots={bookedSlots}
-                />
+            {!bookingConfirmed && (
+                <div className="booking-picker-wrap">
+                    <TimeSlot
+                        setPickupDateTime={setPickupDateTime}
+                        bookedSlots={bookedSlots}
+                        pickupAddress={pickupAddress}
+                        destinationAddress={destinationAddress}
+                        fare={fare}
+                        numberOfPedicabs={numberOfPedicabs}
+                    />
+                </div>
             )}
 
-            <br/><br/>
+            {!bookingConfirmed && (
+                <div className="booking-actions">
+                    <button className="booking-secondary-button" onClick={closeBooking}>Cancel</button>
+                    <button
+                        className="booking-primary-button"
+                        onClick={() => setShowCustomerDetails(true)}
+                        disabled={!pickupDateTime}
+                    >
+                        Continue
+                    </button>
+                </div>
+            )}
 
-            <button onClick={closeBooking}> Cancel </button>
-
-            <button  onClick={() => setShowCustomerDetails(true)} > Continue </button>
-
-            {showCustomerDetails && (
+            {showCustomerDetails && !bookingConfirmed && (
                 <div className="booking-box">
 
-                    <h3>Your name</h3>
+                    <label htmlFor="customer-name">Your name</label>
 
                     <input
+                        id="customer-name"
                         type="text"
                         placeholder="Enter your name"
                         value={customerName}
@@ -81,6 +105,7 @@ function Booking({ closeBooking, fare, numberOfPedicabs }) {
 
             {showCustomerDetails && !bookingConfirmed && (
                 <button
+                    className="booking-confirm-button"
                     onClick={confirmBooking}
                     disabled={!customerName || !pickupDateTime}
                 >
@@ -91,6 +116,7 @@ function Booking({ closeBooking, fare, numberOfPedicabs }) {
             {bookingConfirmed && (
                 <div className="booking-confirmed">
 
+                    <p className="booking-flow-kicker">All set</p>
                     <h3>Booking Confirmed!</h3>
 
                     <p>
@@ -105,7 +131,7 @@ function Booking({ closeBooking, fare, numberOfPedicabs }) {
                         })}
                     </p>
 
-                    <button onClick={() => window.location.href = "/"}> Go Home </button>
+                    <button className="booking-primary-button" onClick={() => window.location.href = "/"}>Go Home</button>
                 </div>
             )}
         </section>

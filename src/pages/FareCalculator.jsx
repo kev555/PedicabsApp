@@ -27,8 +27,10 @@ const mapCenterCoordinates = {
 function FareCalculator() {
     // state needed in this component is just pickupCoordinates, destinationCoordinates, numberOfPedicabs and then obviously the fare
     const [pickupCoordinates, setPickupCoordinatesFunc] = useState(null);
+    const [pickupAddress, setPickupAddress] = useState("");
     const [pickupSelected, setPickupSelected] = useState(false);
     const [destinationCoordinates, setDestinationCoordinatesFunc] = useState(null);
+    const [destinationAddress, setDestinationAddress] = useState("");
     const [numberOfPedicabs, setNumberOfPedicabs] = useState(1);
     const [baseFare, setBaseFare] = useState(null);
 
@@ -46,7 +48,9 @@ function FareCalculator() {
         if (!value.trim()) {
             setPickupSelected(false);
             setPickupCoordinatesFunc(null);
+            setPickupAddress("");
             setDestinationCoordinatesFunc(null);
+            setDestinationAddress("");
 
             if (destinationInputRef.current) {
                 destinationInputRef.current.value = "";
@@ -72,6 +76,7 @@ function FareCalculator() {
     // ie. setting an already null variable to null again does not cause a re-render. So no performance issues here.
     function handleUserManuallyEditingDestination() {
         setDestinationCoordinatesFunc(null);
+        setDestinationAddress("");
         setBaseFare(null);
     }
 
@@ -82,6 +87,7 @@ function FareCalculator() {
         }
 
         setDestinationCoordinatesFunc(location.geometry.location);
+        setDestinationAddress(location.address);
 
         if (destinationInputRef.current) {
             destinationInputRef.current.value = location.address;
@@ -117,6 +123,7 @@ function FareCalculator() {
             };
 
             setPickupCoordinatesFunc(selectedCoordinates);
+            setPickupAddress(selectedPlace.formatted_address || selectedPlace.name);
             handlePickupLocationSelected();
         }
     }
@@ -149,6 +156,7 @@ function FareCalculator() {
             };
 
             setDestinationCoordinatesFunc(selectedCoordinates);
+            setDestinationAddress(selectedPlace.formatted_address || selectedPlace.name);
         }
     }
 
@@ -318,7 +326,7 @@ function FareCalculator() {
                     </div>
 
                     <div className="fare-cost-right-subbox">
-                        {totalFare ? "$" + totalFare : <span className="fare-placeholder">     _ _</span>}
+                        {totalFare ? <span className="fare-price">${totalFare}</span> : <span className="fare-placeholder">     _ _</span>}
 
                         <p className="fare-cost-right-subbox-note">
                             {baseFare !== null && baseFare < 10.05 ? "($10 min charge per cab)" : ""}
@@ -346,18 +354,24 @@ function FareCalculator() {
                 </div>
             </div>
 
-            <button
-                className="book-ride-button"
-                onClick={() => setBookingVisible(true)}
-            >
-                Book this ride
-            </button>
+            {!bookingVisible && (
+                <button
+                    type="button"
+                    className="book-ride-button"
+                    onClick={() => setBookingVisible(true)}
+                    disabled={!totalFare}
+                >
+                    Book this ride
+                </button>
+            )}
 
             {bookingVisible && (
                 <Booking
                     closeBooking={() => setBookingVisible(false)}
                     fare={totalFare}
                     numberOfPedicabs={numberOfPedicabs}
+                    pickupAddress={pickupAddress}
+                    destinationAddress={destinationAddress}
                 />
             )}
 
