@@ -41,7 +41,8 @@ body {
         linear-gradient(rgba(237, 183, 250, 0.9), rgba(255, 255, 254, 0.9)),
         url("/images/pedicab.jpg");
     background-size: auto, 780px auto;
-    background-repeat: repeat;
+        gap: 16px;
+        align-items: center;
     background-attachment: fixed;
     background-blend-mode: lighten;
     background-position: center top, calc(50% - 400px) -50px;
@@ -58,7 +59,6 @@ body {
         50%,
         rgba(255, 255, 254, 0.96)
     );
-    border-radius: 10px;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
     display: flex;
     justify-content: center;
@@ -129,7 +129,7 @@ body {
 }
 
 button {
-    background: #d7b2e7;
+    /* background: #d7b2e7; */
     border: none;
     margin-bottom: 10px;
     padding: 10px;
@@ -232,6 +232,7 @@ button:hover {
 .manual-location-panel {
     display: flex;
     flex-direction: column;
+    justify-content: center;
     padding: 5px 5px;
     border-top: 3px solid #9a65b1;
 }
@@ -378,7 +379,7 @@ button:hover {
 
 .fare-cost {
     display: grid;
-    grid-template-columns: 60% 40%; /* this decides the width of each subbox child */
+    grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
     align-items: center;
     gap: 20px;
     margin: 0;
@@ -400,7 +401,7 @@ button:hover {
     margin: 0 auto;
     padding-bottom: 6px;
     color: #28583f;
-    font-size: 1.75rem;
+    font-size: 2.625rem;
     font-weight: 700;
     line-height: 1;
     text-transform: uppercase;
@@ -418,41 +419,123 @@ button:hover {
     content: "";
 }
 
-.fare-cost-left-subbox-detail {
+.fare-cost-right-subbox-note {
     margin: 8px 0 0;
     color: #667168;
     font-size: 0.75rem;
     line-height: 1.3;
 }
 
-.fare-cost-right-subbox {
+.promo-code-control {
+    display: flex;
+    max-width: 170px;
+    margin: 12px auto 0;
+    gap: 6px;
+}
+
+.promo-code-control input {
+    min-width: 0;
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid #c9b6d1;
+    border-radius: 7px;
+    background: rgba(255, 255, 255, 0.82);
+    color: #333;
+    font: inherit;
+    font-size: 0.75rem;
+    outline: none;
+}
+
+.promo-code-control input:focus {
+    border-color: #9a65b1;
+    box-shadow: 0 0 0 3px rgba(154, 101, 177, 0.12);
+}
+
+.promo-code-control button {
+    flex: 0 0 auto;
     margin: 0;
+    padding: 8px 12px;
+    border: 1px solid #9a65b1;
+    border-radius: 7px;
+    background: #f8effb;
+    color: #7b4d91;
+    font-size: 0.75rem;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.promo-code-control button:hover:not(:disabled) {
+    background: #eedbf6;
+}
+
+.promo-code-control button:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+.promo-code-message {
+    margin: 6px 0 0;
+    color: #a14c5a;
+    font-size: 0.7rem;
+    line-height: 1.2;
+}
+
+.promo-code-message.promo-code-success {
+    color: #28583f;
+    font-size: 0.9rem;
+}
+
+.fare-cost-right-subbox {
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+    margin: 0;
+    padding: 10px 12px;
+    border-radius: 8px;
     color: #7b4d91;
     font-size: 3.5rem;
     font-weight: 700;
     line-height: 1;
-    text-align: left;
+    text-align: center;
 }
 
-.fare-price {
+.fare-cost-right-subbox-price {
     display: inline-block;
     padding-bottom: 8px;
+    padding-top: 8px;
     border-bottom: 3px solid #9a65b1;
 }
 
-.fare-cost-right-subbox-note {
-    margin: 0;
-    color: #667168;
-    font-size: 0.75rem;
-    text-align: left;
-    padding-left: 25px;
-    padding-top: 8px;
+.fare-cost-right-subbox-when-discounted {
+    display: flex;
+    max-width: 100%;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    font-size: 2.975rem;
+    line-height: 1;
+    overflow-wrap: anywhere;
+}
+
+.fare-cost-right-subbox-price-when-discounted-discount {
+    color: #a14c5a;
+    font-size: 1.05rem;
+}
+
+.fare-cost-right-subbox-price-when-discounted-original {
+    color: #28583f;
+    font-size: 1.75rem;
 }
 
 @media (max-width: 700px) {
     .fare-cost-right-subbox, .fare-cost-right-subbox-note {
         text-align: center;
         padding-left: 0px;
+    }
+
+    .fare-cost-right-subbox-when-discounted {
+        justify-content: center;
     }
 }
 
@@ -603,12 +686,14 @@ button:hover {
     font-size: 1.1rem;
     text-transform: uppercase;
     letter-spacing: 0.06em;
+    text-align: center;
 }
 
 .card-container {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 10px;
+    justify-content: center;
     max-width: 900px;
     margin: 0 auto;
 }
@@ -703,10 +788,11 @@ button:hover {
     .fare-cost {
         align-items: flex-start;
         grid-template-columns: 1fr;
+        gap: 8px;
     }
 
     .fare-cost-right-subbox {
-        margin-top: 8px;
+        margin-top: 0;
     }
 }
 
@@ -732,13 +818,31 @@ button:hover {
     margin: 0 auto 20px;
 }
 
-.booking-flow-header h2 {
+.booking-flow-title {
     margin: 20px 0 8px;
     color: #28583f;
     font-size: 1.4rem;
+    position: relative;
+    width: fit-content;
+    max-width: 100%;
+    margin-right: auto;
+    margin-left: auto;
+    padding-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
 }
 
-.booking-flow-header > p:last-child {
+.booking-flow-title::after {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    height: 1px;
+    background: rgba(154, 101, 177, 0.45);
+    content: "";
+}
+
+.booking-flow-title::after {
     margin: 0;
     color: #667168;
     font-size: 0.9rem;
@@ -762,20 +866,36 @@ button:hover {
     margin-top: 1rem;
 }
 
-.your-ride-section-details {
-    display: flex;
-    justify-content: space-between;
-    gap: 16px;
-    margin-top: 5px;
-    color: #667168;
-    font-size: 0.85rem;
+.your-ride-section-row,
+.your-order-section-row {
+    display: grid;
+    grid-template-columns: 58px minmax(0, 1fr);
+    align-items: start;
+    gap: 10px;
+    min-width: 0;
+    color: #28583f;
+    font-size: 0.9rem;
+    line-height: 1.35;
 }
 
-.your-order-section-details {
-    display: block;
-    margin-top: 5px;
-    color: #667168;
-    font-size: 0.85rem;
+.your-ride-section-row > b,
+.your-order-section-row > b {
+    min-width: 0;
+    color: #9a65b1;
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+}
+
+.your-ride-section-row > span,
+.your-order-section-row > span {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    font-weight: 700;
+}
+
+.your-ride-section-cost {
+    color: #7b4d91;
 }
 
 .your-ride-section-route,
@@ -785,43 +905,35 @@ button:hover {
     gap: 4px;
     margin: 10px 0 0;
     color: #667168;
-    font-size: 0.75rem;
+    font-size: 0.85rem;
     line-height: 1.35;
-}
-
-.your-ride-section-route > span,
-.your-order-section-route > span {
-    display: grid;
-    grid-template-columns: 42px minmax(0, 1fr);
-    align-items: start;
-    gap: 10px;
-    min-width: 0;
-}
-
-.your-ride-section-route > span > b,
-.your-order-section-route > span > b {
-    min-width: 0;
-    color: #9a65b1;
-    font-size: 0.65rem;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-}
-
-.your-ride-section-route > span > span,
-.your-order-section-route > span > span {
-    min-width: 0;
-    overflow-wrap: anywhere;
 }
 
 .booking-flow-kicker,
 .your-ride-section-label,
 .your-order-section-label {
-    margin: 0;
+    position: relative;
+    display: block;
+    width: fit-content;
+    margin: 0 auto;
+    padding-bottom: 6px;
     color: #9a65b1;
     font-size: 0.7rem;
     font-weight: 800;
     letter-spacing: 0.1em;
+    text-align: center;
     text-transform: uppercase;
+}
+
+.your-ride-section-label::after,
+.your-order-section-label::after {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    height: 1px;
+    background: rgba(154, 101, 177, 0.45);
+    content: "";
 }
 
 .booking-primary-button,
@@ -944,6 +1056,11 @@ button:hover {
     transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
 }
 
+.time-grid button {
+    height: 3rem;
+    padding: 0.15rem 0.1rem;
+}
+
 .date-grid button:hover:not(.selected),
 .time-grid button:hover:not(:disabled):not(.selected) {
     border-color: #9a65b1;
@@ -961,7 +1078,7 @@ button:hover {
 
 .time-grid button:disabled {
     background: rgba(235, 239, 235, 0.8);
-    color: #9aa39c;
+    color: #333;
     cursor: not-allowed;
 }
 
@@ -973,42 +1090,52 @@ button:hover {
     line-height: 1.4;
 }
 
-.your-order-section .your-order-section-route {
-    margin-top: 8px;
-    color: #667168;
-    font-size: 0.8rem;
-    font-weight: 500;
-    text-align: left;
-}
-
-.your-order-section .your-order-section-route > span {
-    grid-template-columns: 42px minmax(0, 1fr);
-    text-align: left;
-}
-
 .your-order-section-date {
-    margin: 14px 0 0;
     color: #28583f;
-    font-size: 0.95rem;
-    font-weight: 800;
-    line-height: 1.4;
 }
 
 .your-order-section-fare {
-    display: block;
+    display: inline-block;
     width: fit-content;
-    margin: 14px auto 0;
+    margin: 0;
+    color: #7b4d91;
+    font-size: 1.2rem;
+    line-height: 1;
+}
+
+.your-order-section-fare-discounted {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    gap: 8px;
+    font-size: 1.16rem;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+.your-order-section-fare-wrapper {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.your-order-section-fare-discounted-discount {
+    color: #a14c5a;
+    font-size: 0.48rem;
+}
+
+.your-order-section-fare-discounted-final {
     padding-bottom: 7px;
     border-bottom: 3px solid #9a65b1;
     color: #7b4d91;
-    font-size: 1.6rem;
-    line-height: 1;
-    text-align: center;
+    font-size: 1.12rem;
 }
 
-.your-order-section .your-order-section-route + p {
-    margin-top: 12px;
+.your-order-section-fare-discounted-original {
+    color: #28583f;
+    font-size: 0.8rem;
 }
+
 
 .booking-box {
     max-width: 440px;
@@ -1079,6 +1206,14 @@ button:hover {
 
     .time-slot-panel {
         padding: 12px 8px;
+    }
+
+    .date-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .time-grid {
+        grid-template-columns: repeat(5, minmax(0, 1fr));
     }
 
     .booking-actions {

@@ -3,7 +3,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import TimeSlot from "../components/TimeSlot";
 import { supabase } from "../supabase";
 
-function Booking({ closeBooking, fare, numberOfPedicabs, pickupAddress, destinationAddress }) {
+function Booking({ closeBooking, fare, numberOfPedicabs, pickupAddress, destinationAddress, originalFare, discountAmount, promoApplied }) {
 
     const [bookedSlots, setBookedSlots] = useState([]);
     const [pickupDateTime, setPickupDateTime] = useState(null);
@@ -51,15 +51,22 @@ function Booking({ closeBooking, fare, numberOfPedicabs, pickupAddress, destinat
             <div className="booking-flow-header">
                 <div className="your-ride-section">
                     <span className="your-ride-section-label">Your ride</span>
-                    <div className="your-ride-section-details">
-                        <span>{numberOfPedicabs} {numberOfPedicabs === 1 ? "pedicab" : "pedicabs"}</span>
-                    </div>
                     <div className="your-ride-section-route">
-                        <span><b>From</b><span>{pickupAddress}</span></span>
-                        <span><b>To</b><span>{destinationAddress}</span></span>
+                        <span className="your-ride-section-row">
+                            <b>Cabs:</b>
+                            <span>{numberOfPedicabs} {numberOfPedicabs === 1 ? "Pedicab" : "Pedicabs"}</span>
+                        </span>
+                        <span className="your-ride-section-row"><b>From:</b><span>{pickupAddress}</span></span>
+                        <span className="your-ride-section-row"><b>To:</b><span>{destinationAddress}</span></span>
+                        <span className="your-ride-section-row">
+                            <b>Cost:</b>
+                            <span className="your-ride-section-cost">${fare}</span>
+                        </span>
                     </div>
                 </div>
-                <h2>Choose a pickup date and time</h2>
+
+                <p className="booking-flow-title">Choose a pickup date and time</p>
+                
             </div>
 
             {!bookingConfirmed && (
@@ -71,10 +78,12 @@ function Booking({ closeBooking, fare, numberOfPedicabs, pickupAddress, destinat
                         destinationAddress={destinationAddress}
                         fare={fare}
                         numberOfPedicabs={numberOfPedicabs}
+                        originalFare={originalFare}
+                        discountAmount={discountAmount}
+                        promoApplied={promoApplied}
                     />
                 </div>
             )}
-
             {!bookingConfirmed && (
                 <div className="booking-actions">
                     <button className="booking-secondary-button" onClick={closeBooking}>Cancel</button>

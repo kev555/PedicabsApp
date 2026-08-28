@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-function TimeSlot({ bookedSlots, setPickupDateTime, pickupAddress, destinationAddress, fare, numberOfPedicabs }) {
+function TimeSlot({ bookedSlots, setPickupDateTime, pickupAddress, destinationAddress, fare, numberOfPedicabs, originalFare, discountAmount, promoApplied }) {
     // React remembers these values between renders.
     const [selectedDate, setSelectedDate] = useState(null);
     const [selectedTime, setSelectedTime] = useState(null);
@@ -129,24 +129,43 @@ function TimeSlot({ bookedSlots, setPickupDateTime, pickupAddress, destinationAd
             {selectedDate && selectedTime && (
                 <div className="your-order-section">
                     <span className="your-order-section-label">Your order</span>
-                    <div className="your-order-section-details">
-                        <span>{numberOfPedicabs} {numberOfPedicabs === 1 ? "pedicab" : "pedicabs"}</span>
-                    </div>
                     <div className="your-order-section-route">
-                        <span><b>From</b><span>{pickupAddress}</span></span>
-                        <span><b>To</b><span>{destinationAddress}</span></span>
+                        <span className="your-order-section-row">
+                            <b>Cabs:</b>
+                            <span>{numberOfPedicabs} {numberOfPedicabs === 1 ? "Pedicab" : "Pedicabs"}</span>
+                        </span>
+                        <span className="your-order-section-row"><b>From:</b><span>{pickupAddress}</span></span>
+                        <span className="your-order-section-row"><b>To:</b><span>{destinationAddress}</span></span>
+                        <span className="your-order-section-row">
+                            <b>Date:</b>
+                            <span className="your-order-section-date">
+                                {new Date(selectedTime).toLocaleString("en-AU", {
+                                    weekday: "long",
+                                    day: "numeric",
+                                    month: "long",
+                                    hour: "numeric",
+                                    minute: "2-digit",
+                                    hour12: true
+                                })}
+                            </span>
+                        </span>
+                        <span className="your-order-section-row">
+                            <b>Cost</b>
+                            <span className="your-order-section-fare-wrapper">
+                                {fare && (
+                                    promoApplied ? (
+                                        <strong className="your-order-section-fare your-order-section-fare-discounted">
+                                            <span className="your-order-section-fare-discounted-original">${originalFare}</span>
+                                            <span className="your-order-section-fare-discounted-discount">- ${discountAmount}</span>
+                                            <b className="your-order-section-fare-discounted-final">= ${fare}</b>
+                                        </strong>
+                                    ) : (
+                                        <strong className="your-order-section-fare">${fare}</strong>
+                                    )
+                                )}
+                            </span>
+                        </span>
                     </div>
-                    <p className="your-order-section-date">
-                        {new Date(selectedTime).toLocaleString("en-AU", {
-                            weekday: "long",
-                            day: "numeric",
-                            month: "long",
-                            hour: "numeric",
-                            minute: "2-digit",
-                            hour12: true
-                        })}
-                    </p>
-                    {fare && <strong className="your-order-section-fare">${fare}</strong>}
                 </div>
             )}
         </section>
