@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simplified Page</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "Inter", sans-serif;
+            color: #333;
+            line-height: 1;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 16px;
+            
+            /* Solid background color mix */
+            background-color: rgba(246, 219, 252, 0.9);
+            
+            /* Background image setup */
+            background-image: url("pedicab.webp");
+            
+            /* CHANGED: Decreased from 780px to 260px to tile more frequently */
+            background-size: 260px auto; 
+            
+            background-attachment: fixed;
+            background-blend-mode: lighten;
+        }
+
+        .content {
+            text-align: center;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="content">
+
+    </div>
+
+</body>
+</html>
+

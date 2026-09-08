@@ -1,9 +1,8 @@
-import { lazy, Suspense, useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { GoogleMap, Marker, Autocomplete } from "@react-google-maps/api";
+import { importLibrary, setOptions } from "@googlemaps/js-api-loader";
 
 import QUICK_LOCATIONS_json from './locations.json';
-
-const Booking = lazy(() => import("./Booking"));
 
 const QUICK_LOCATIONS = QUICK_LOCATIONS_json;
 
@@ -39,6 +38,9 @@ function FareCalculator() {
     const [promoCode, setPromoCode] = useState("");
     const [promoApplied, setPromoApplied] = useState(false);
     const [promoMessage, setPromoMessage] = useState("");
+    const [bookingModeSelected, setBookingModeSelected] = useState(false);
+    const [mapsReady, setMapsReady] = useState(false);
+    const [BookingComponent, setBookingComponent] = useState(null);
 
     // and one to load in booking.jsx component div
     const [bookingVisible, setBookingVisible] = useState(false);
@@ -49,6 +51,25 @@ function FareCalculator() {
 
     // Ref for the actual destination input element
     const destinationInputRef = useRef(null);
+
+    useEffect(() => {
+        setOptions({
+            key: import.meta.env.VITE_GOOGLE_MAPS_KEY,
+            v: "weekly"
+        });
+
+        Promise.all([
+            importLibrary("maps"),
+            importLibrary("places")
+        ])
+            .then(() => {
+                setMapsReady(true);
+
+                return import("./Booking");
+            })
+            .then((bookingModule) => setBookingComponent(() => bookingModule.default))
+            .catch((error) => console.error("Google Maps failed to load", error));
+    }, []);
 
     function handleUserManuallyEditingPickup() {
         setBookingVisible(false);
@@ -217,109 +238,144 @@ function FareCalculator() {
     return (
         <section className="content-box">
 
-            <div className="location-section-parent">
-                <section className="manual-location-panel">
-                    <h2 className="manual-location-panel-title">Select pick up and drop off locations</h2>
-
-                    <div className="manual-location-panel-inputs">
-
-                        <div>
-                            <Autocomplete
-                                onLoad={handlePickupAutocompleteLoad}
-                                onPlaceChanged={handlePickupPlaceChanged}
-                                options={{
-                                    componentRestrictions: { country: "au" },
-                                    bounds: cairnsServiceArea,
-                                    strictBounds: true
-                                }}
-                            >
-                                <input
-                                    type="text"
-                                    className="custom-input"
-                                    placeholder="Enter Pick Up Location.."
-                                    onChange={handleUserManuallyEditingPickup}
-                                />
-                            </Autocomplete>
-                        </div>
-
-                        <div>
-                            <Autocomplete
-                                onLoad={handleDestinationAutocompleteLoad}
-                                onPlaceChanged={handleDestinationPlaceChanged}
-                                options={{
-                                    componentRestrictions: { country: "au" },
-                                    bounds: cairnsServiceArea,
-                                    strictBounds: true
-                                }}
-                            >
-                                {/* 
-                                    Manually plugging into Google Autocomplete:
-
-                                    Google's Autocomplete instance doesn't provide a way to simulate a user inputting a location ie. onPlaceChanged={} can not be triggered programmatically. So for the quick pick destination buttons I need to implement the logic myself. So there a few things that need to be covered:
-
-                                    1. The logic for updating the destination corordintaes (handleDestinationPlaceChanged).
-                                    For this I just modified handleDestinationPlaceChanged to accept an optional quickLocation parameter, which is the location object from the quick pick button. If it is provided, it will use that instead of the Google Autocomplete instance. This way I can call handleDestinationPlaceChanged(quickLocation) from the quick pick button and it will update the destination coordinates and address accordingly in the same way as if the user had selected a suggestion from the Google Autocomplete dropdown.
-                                    
-                                    2. The logic for updating the input value to reflect the quick pick location:
-                                    For this I could have used two methods, either a React state variable or a ref. I chose to use a ref because it is simpler and avoids unnecessary re-renders of the component when the input value changes. The downside is that I have to manage the input value manually, but in this case, it's a reasonable trade-off.
-
-                                    3. The logic for clearing the destination coordinates and fare when the user starts typing in the input:
-                                    This is handled by the onChange event of the input, which calls handleUserManuallyEditingDestination. This function clears the destination coordinates and fare state variables, but does not clear the input value itself, so the user can continue typing and get suggestions from Google Autocomplete.
-
-                                    */}
-                                <input
-                                    ref={destinationInputRef}
-                                    type="text"
-                                    className="custom-input"
-                                    placeholder="Enter Drop Off Location.."
-                                    disabled={!pickupSelected}
-                                    onChange={handleUserManuallyEditingDestination}
-                                />
-                            </Autocomplete>
-                        </div>
-
-                    </div>
-                </section>
-
-                <section className="quick-locations-panel">
-                    <h2 className="quick-locations-panel-title">Popular Destinations</h2>
-
-                    <div className="quick-locations-panel-options">
-                        {QUICK_LOCATIONS.map((loc) => {
-                            return (
-                                <button
-                                    key={loc.shorthand_name}
-                                    type="button"
-                                    title={loc.shorthand_name}
-                                    className="quick-locations-panel-button"
-                                    onClick={() => handleDestinationPlaceChanged(loc)}
-                                >
-                                    {loc.shorthand_name}
-                                </button>
-                            );
-                        })}
-                    </div>
-                </section>
-            </div>
-
-            <div className="map-frame">
-                <GoogleMap
-                    mapContainerStyle={mapContainerStyle}
-                    center={pickupCoordinates || mapCenterCoordinates}
-                    zoom={14}
-                    options={{
-                        mapTypeControl: false,
-                        streetViewControl: false,
-                        fullscreenControl: false,
-                    }}
+            {!bookingModeSelected && <div className="booking-choice-panel">
+                <button
+                    type="button"
+                    className="booking-mode-option"
+                    onClick={() => setBookingModeSelected(true)}
                 >
-                    {pickupCoordinates && <Marker position={pickupCoordinates} label="Pick Up" />}
+                    <span className="booking-mode-option-title">Book For Right Now</span>
+                    <span className="booking-mode-option-description">
+                        You are ordering for right now. Meaning you can see available Pedicab(s) at your current location.
+                    </span>
+                </button>
 
-                    {destinationCoordinates && <Marker position={destinationCoordinates} label="Drop Off" />}
-                </GoogleMap>
+                <button
+                    type="button"
+                    className="booking-mode-option"
+                    onClick={() => setBookingModeSelected(true)}
+                >
+                    <span className="booking-mode-option-title">Book For Later Time/Date</span>
+                    <span className="booking-mode-option-description">
+                        Choose any future date/time and pick up location
+                    </span>
+                </button>
+            </div>}
+
+            {bookingModeSelected && <div className="location-section-parent">
+                {
+                    ! mapsReady ? 
+                    (<p 
+                        className="maps-loading-message">Loading booking tools...
+                    </p>) : 
+                    
+                    ( <>
+                            <section className="manual-location-panel">
+                                <h2 className="manual-location-panel-title">Select pick up and drop off locations</h2>
+
+                                <div className="manual-location-panel-inputs">
+
+                            <div>
+                                <Autocomplete
+                                    onLoad={handlePickupAutocompleteLoad}
+                                    onPlaceChanged={handlePickupPlaceChanged}
+                                    options={{
+                                        componentRestrictions: { country: "au" },
+                                        bounds: cairnsServiceArea,
+                                        strictBounds: true
+                                    }}
+                                >
+                                    <input
+                                        type="text"
+                                        className="custom-input"
+                                        placeholder="Enter Pick Up Location.."
+                                        onChange={handleUserManuallyEditingPickup}
+                                    />
+                                </Autocomplete>
+                            </div>
+
+                            <div>
+                                <Autocomplete
+                                    onLoad={handleDestinationAutocompleteLoad}
+                                    onPlaceChanged={handleDestinationPlaceChanged}
+                                    options={{
+                                        componentRestrictions: { country: "au" },
+                                        bounds: cairnsServiceArea,
+                                        strictBounds: true
+                                    }}
+                                >
+                                    {/* 
+                                        Manually plugging into Google Autocomplete:
+
+                                        Google's Autocomplete instance doesn't provide a way to simulate a user inputting a location ie. onPlaceChanged={} can not be triggered programmatically. So for the quick pick destination buttons I need to implement the logic myself. So there a few things that need to be covered:
+
+                                        1. The logic for updating the destination corordintaes (handleDestinationPlaceChanged).
+                                        For this I just modified handleDestinationPlaceChanged to accept an optional quickLocation parameter, which is the location object from the quick pick button. If it is provided, it will use that instead of the Google Autocomplete instance. This way I can call handleDestinationPlaceChanged(quickLocation) from the quick pick button and it will update the destination coordinates and address accordingly in the same way as if the user had selected a suggestion from the Google Autocomplete dropdown.
+                                        
+                                        2. The logic for updating the input value to reflect the quick pick location:
+                                        For this I could have used two methods, either a React state variable or a ref. I chose to use a ref because it is simpler and avoids unnecessary re-renders of the component when the input value changes. The downside is that I have to manage the input value manually, but in this case, it's a reasonable trade-off.
+
+                                        3. The logic for clearing the destination coordinates and fare when the user starts typing in the input:
+                                        This is handled by the onChange event of the input, which calls handleUserManuallyEditingDestination. This function clears the destination coordinates and fare state variables, but does not clear the input value itself, so the user can continue typing and get suggestions from Google Autocomplete.
+
+                                        */}
+                                    <input
+                                        ref={destinationInputRef}
+                                        type="text"
+                                        className="custom-input"
+                                        placeholder="Enter Drop Off Location.."
+                                        disabled={!pickupSelected}
+                                        onChange={handleUserManuallyEditingDestination}
+                                    />
+                                </Autocomplete>
+                            </div>
+
+                                </div>
+                            </section>
+
+                            <section className="quick-locations-panel">
+                                <h2 className="quick-locations-panel-title">Popular Destinations</h2>
+
+                                <div className="quick-locations-panel-options">
+                                    {QUICK_LOCATIONS.map((loc) => {
+                                        return (
+                                            <button
+                                                key={loc.shorthand_name}
+                                                type="button"
+                                                title={loc.shorthand_name}
+                                                className="quick-locations-panel-button"
+                                                onClick={() => handleDestinationPlaceChanged(loc)}
+                                            >
+                                                {loc.shorthand_name}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </section>
+                        </>
+                    )
+                }
+            </div>}
+
+            <div className={`map-frame ${!bookingModeSelected ? "map-frame-preloaded" : ""}`}>
+                {mapsReady && <GoogleMap
+                        mapContainerStyle={mapContainerStyle}
+                        center={pickupCoordinates || mapCenterCoordinates}
+                        zoom={14}
+                        options={{
+                            mapTypeControl: false,
+                            streetViewControl: false,
+                            fullscreenControl: false,
+                        }}
+                    >
+                        {pickupCoordinates && <Marker position={pickupCoordinates} label="Pick Up" />}
+
+                        {destinationCoordinates && <Marker position={destinationCoordinates} label="Drop Off" />}
+                    </GoogleMap>}
+
             </div>
 
-            <div className="fare-calculation-section">
+            {bookingModeSelected && mapsReady && <div className="fare-calculation-section">
                 <div className="fare-cost">
                     <div className="fare-cost-left-subbox">
                         <div className="fare-cost-left-subbox-title">Total Fare:</div>
@@ -399,7 +455,7 @@ function FareCalculator() {
                         ))}
                     </div>
                 </div>
-            </div>
+            </div>}
 
             
 
@@ -407,7 +463,7 @@ function FareCalculator() {
                         {/* Terminology refresher: The following is:
             Two React elements inside a single React Fragment (or container tag), inside a JSX expression. */}
 
-            {!bookingVisible && (
+            {bookingModeSelected && mapsReady && !bookingVisible && (
                 <>
                     <button 
                         type="button" 
@@ -428,9 +484,8 @@ function FareCalculator() {
                 </>
             )}
 
-            {bookingVisible && (
-                <Suspense fallback={<p>Loading booking options...</p>}>
-                    <Booking
+            {bookingModeSelected && mapsReady && bookingVisible && BookingComponent && (
+                    <BookingComponent
                         closeBooking={() => setBookingVisible(false)}
                         fare={totalFare}
                         numberOfPedicabs={numberOfPedicabs}
@@ -440,7 +495,6 @@ function FareCalculator() {
                         discountAmount={discountAmount}
                         promoApplied={promoApplied}
                     />
-                </Suspense>
             )}
 
             <br />

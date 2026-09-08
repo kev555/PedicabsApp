@@ -39,7 +39,7 @@ body {
     min-height: 100vh;
     background:
         linear-gradient(rgba(237, 183, 250, 0.9), rgba(255, 255, 254, 0.9)),
-        url("/images/pedicab.jpg");
+        url("/images/pedicab.webp");
     background-size: auto, 780px auto;
         gap: 16px;
         align-items: center;
@@ -160,6 +160,7 @@ button:hover {
     text-align: center;
     overflow-wrap: break-word;
     border: 1px solid #ccc;
+    position: relative;
 }
 
 /* Shared content box styling */
@@ -223,10 +224,75 @@ button:hover {
 .location-section-parent {
     width: 98%;
     display: grid;
-    grid-template-columns: 1.4fr 0.6fr;
+    grid-template-columns: 1fr 1fr;
     align-items: stretch;
     margin: 5px auto;
     gap: 6px;
+}
+
+.booking-mode-option {
+    display: flex;
+    min-height: 180px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    padding: 24px;
+    border: 1px solid rgba(70, 100, 80, 0.24);
+    border-top: 3px solid #9a65b1;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.7);
+    box-shadow: 0 4px 12px rgba(50, 70, 55, 0.08);
+    color: #28583f;
+    text-align: center;
+    transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+.booking-mode-option:hover {
+    border-color: #9a65b1;
+    background: rgba(248, 239, 251, 0.9);
+    transform: translateY(-2px);
+}
+
+.booking-mode-option-title {
+    margin-bottom: 14px;
+    font-size: 1.15rem;
+    font-weight: 700;
+    line-height: 1.25;
+}
+
+.booking-mode-option-description {
+    max-width: 360px;
+    color: #667168;
+    font-size: 0.9rem;
+    font-weight: 400;
+    line-height: 1.5;
+}
+
+.booking-choice-panel {
+    position: relative;
+    z-index: 2;
+    display: grid;
+    width: 98%;
+    min-height: 365px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: stretch;
+    margin: 5px auto;
+    padding: 12px;
+    gap: 10px;
+    border: 1px solid rgba(70, 100, 80, 0.24);
+    border-radius: 10px;
+    background: rgba(255, 255, 254, 0.98);
+    box-shadow: 0 4px 12px rgba(50, 70, 55, 0.08);
+}
+
+.maps-loading-message {
+    margin: 0;
+    padding: 80px 24px;
+    color: #667168;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    text-align: center;
 }
 
 .manual-location-panel {
@@ -331,6 +397,7 @@ button:hover {
 /* Map */
 
 .map-frame {
+    position: relative;
     width: 98%;
     margin: 0 auto 10px;
     padding: 5px;
@@ -342,11 +409,34 @@ button:hover {
     box-shadow: 0 4px 12px rgba(50, 70, 55, 0.08);
 }
 
+.map-frame-preloaded {
+    position: absolute;
+    top: 12px;
+    left: 3%;
+    z-index: 1;
+    width: 94%;
+    pointer-events: none;
+}
+
+.map-frame-preloaded::after {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background: rgba(255, 255, 254, 0.98);
+    content: "";
+}
+
 .map-frame > div {
     width: 100% !important;
     max-width: none !important;
     height: 300px !important;
     border-radius: 6px;
+}
+
+@media (max-width: 700px) {
+    .booking-choice-panel {
+        grid-template-columns: 1fr;
+    }
 }
 
 
@@ -1224,8 +1314,14 @@ button:hover {
 
 
 .site-footer {
+
+    font-size: 0.8rem;
     background: #222;
     color: white;
     text-align: center;
-    padding: 2px;
+    padding: 6px 2px;
+}
+
+.site-footer p {
+    margin: 0;
 }
