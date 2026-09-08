@@ -47,7 +47,7 @@ function Booking({ closeBooking, fare, numberOfPedicabs, pickupAddress, destinat
     }
 
     return (
-        <section className="content-box booking-flow">
+        <>
             <div className="booking-flow-header">
                 <div className="your-ride-section">
                     <span className="your-ride-section-label">Your ride</span>
@@ -60,33 +60,40 @@ function Booking({ closeBooking, fare, numberOfPedicabs, pickupAddress, destinat
                         <span className="your-ride-section-row"><b>To:</b><span>{destinationAddress}</span></span>
                         <span className="your-ride-section-row">
                             <b>Cost:</b>
-                            <span className="your-ride-section-cost">${fare}</span>
+                            <span className="your-order-section-fare-wrapper">
+                                {fare && (
+                                    promoApplied ? (
+                                        <strong className="your-order-section-fare your-order-section-fare-discounted">
+                                            <span className="your-order-section-fare-discounted-original">${originalFare}</span>
+                                            <span className="your-order-section-fare-discounted-discount">- ${discountAmount}</span>
+                                            = <b className="your-order-section-fare-discounted-final">${fare}</b>
+                                        </strong>
+                                    ) : (
+                                        <strong className="your-order-section-fare">${fare}</strong>
+                                    )
+                                )}
+                            </span>
                         </span>
                     </div>
                 </div>
 
-                <p className="booking-flow-title">Choose a pickup date and time</p>
-                
             </div>
 
             {!bookingConfirmed && (
-                <div className="booking-picker-wrap">
-                    <TimeSlot
-                        setPickupDateTime={setPickupDateTime}
-                        bookedSlots={bookedSlots}
-                        pickupAddress={pickupAddress}
-                        destinationAddress={destinationAddress}
-                        fare={fare}
-                        numberOfPedicabs={numberOfPedicabs}
-                        originalFare={originalFare}
-                        discountAmount={discountAmount}
-                        promoApplied={promoApplied}
-                    />
-                </div>
+                <TimeSlot
+                    setPickupDateTime={setPickupDateTime}
+                    bookedSlots={bookedSlots}
+                    pickupAddress={pickupAddress}
+                    destinationAddress={destinationAddress}
+                    fare={fare}
+                    numberOfPedicabs={numberOfPedicabs}
+                    originalFare={originalFare}
+                    discountAmount={discountAmount}
+                    promoApplied={promoApplied}
+                />
             )}
             {!bookingConfirmed && (
                 <div className="booking-actions">
-                    <button className="booking-secondary-button" onClick={closeBooking}>Cancel</button>
                     <button
                         className="booking-primary-button"
                         onClick={() => setShowCustomerDetails(true)}
@@ -94,6 +101,7 @@ function Booking({ closeBooking, fare, numberOfPedicabs, pickupAddress, destinat
                     >
                         Continue
                     </button>
+                    <button className="booking-secondary-button" onClick={closeBooking}>Cancel</button>
                 </div>
             )}
 
@@ -143,7 +151,7 @@ function Booking({ closeBooking, fare, numberOfPedicabs, pickupAddress, destinat
                     <button className="booking-primary-button" onClick={() => window.location.href = "/"}>Go Home</button>
                 </div>
             )}
-        </section>
+        </>
     );
 }
 

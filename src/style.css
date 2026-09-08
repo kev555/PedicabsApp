@@ -100,7 +100,7 @@ body {
 .nav-container a {
     color: #667168;
     text-decoration: none;
-    padding: 8px 14px;
+    padding: 4px 14px;
     border: 1px solid transparent;
     border-radius: 8px;
     font-family: inherit;
@@ -491,7 +491,7 @@ button:hover {
     margin: 0 auto;
     padding-bottom: 6px;
     color: #28583f;
-    font-size: 2.625rem;
+    font-size: 2rem;
     font-weight: 700;
     line-height: 1;
     text-transform: uppercase;
@@ -583,7 +583,7 @@ button:hover {
     padding: 10px 12px;
     border-radius: 8px;
     color: #7b4d91;
-    font-size: 3.5rem;
+    font-size: 2.65rem;
     font-weight: 700;
     line-height: 1;
     text-align: center;
@@ -603,19 +603,19 @@ button:hover {
     justify-content: center;
     flex-wrap: wrap;
     gap: 8px;
-    font-size: 2.975rem;
+    font-size: 2.25rem;
     line-height: 1;
     overflow-wrap: anywhere;
 }
 
 .fare-cost-right-subbox-price-when-discounted-discount {
     color: #a14c5a;
-    font-size: 1.05rem;
+    font-size: 0.8rem;
 }
 
 .fare-cost-right-subbox-price-when-discounted-original {
     color: #28583f;
-    font-size: 1.75rem;
+    font-size: 1.35rem;
 }
 
 @media (max-width: 700px) {
@@ -745,6 +745,26 @@ button:hover {
 .book-ride-button:disabled:hover {
     background: #aab5ac;
     transform: none;
+}
+
+.fare-calculator-actions {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.fare-calculator-actions .book-ride-button {
+    margin-right: 0;
+    margin-left: 0;
+}
+
+.fare-calculator-back-button {
+    background: #7b4d91;
+}
+
+.fare-calculator-back-button:hover {
+    background: #7b4d91;
 }
 
 
@@ -895,34 +915,38 @@ button:hover {
 
 /* Date and time selection */
 
-.booking-flow {
-    width: min(100% - 30px, 760px);
-    margin: 16px auto;
-    padding: 24px;
-    border-top: 4px solid #9a65b1;
-    background: linear-gradient(145deg, rgba(224, 250, 208, 0.98), rgba(255, 255, 254, 0.98));
+.booking-flow-header {
+    width: 98%;
+    margin: 5px auto 10px;
 }
 
-.booking-flow-header {
-    max-width: 540px;
-    margin: 0 auto 20px;
+.booking-flow-title,
+.your-ride-section-label,
+.your-order-section-label {
+    position: relative;
+    display: block;
+    width: fit-content;
+    max-width: 100%;
+    padding-bottom: 6px;
+    color: #28583f;
+    font-size: 1.4rem;
+    letter-spacing: 0.06em;
+    text-align: center;
+    text-transform: uppercase;
 }
 
 .booking-flow-title {
-    margin: 20px 0 8px;
-    color: #28583f;
-    font-size: 1.4rem;
-    position: relative;
-    width: fit-content;
-    max-width: 100%;
-    margin-right: auto;
-    margin-left: auto;
-    padding-bottom: 6px;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
+    margin: 20px auto 8px;
 }
 
-.booking-flow-title::after {
+.your-ride-section-label,
+.your-order-section-label {
+    margin: 0 auto;
+}
+
+.booking-flow-title::after,
+.your-ride-section-label::after,
+.your-order-section-label::after {
     position: absolute;
     right: 0;
     bottom: 0;
@@ -932,16 +956,10 @@ button:hover {
     content: "";
 }
 
-.booking-flow-title::after {
-    margin: 0;
-    color: #667168;
-    font-size: 0.9rem;
-    line-height: 1.5;
-}
-
 .your-ride-section,
 .your-order-section {
-    max-width: 500px;
+    width: 100%;
+    max-width: none;
     margin: 0 auto;
     padding: 16px 18px;
     border: 1px solid rgba(40, 88, 63, 0.35);
@@ -949,7 +967,7 @@ button:hover {
     border-radius: 8px;
     background: linear-gradient(135deg, rgba(224, 250, 208, 0.9), rgba(248, 239, 251, 0.86));
     color: #28583f;
-    text-align: left;
+    text-align: center;
 }
 
 .your-order-section {
@@ -958,21 +976,14 @@ button:hover {
 
 .your-ride-section-row,
 .your-order-section-row {
-    display: grid;
-    grid-template-columns: 58px minmax(0, 1fr);
-    align-items: start;
-    gap: 10px;
-    min-width: 0;
-    color: #28583f;
-    font-size: 0.9rem;
-    line-height: 1.35;
+    display: contents;
 }
 
 .your-ride-section-row > b,
 .your-order-section-row > b {
     min-width: 0;
     color: #9a65b1;
-    font-size: 0.65rem;
+    font-size: 1.40rem;
     font-weight: 800;
     letter-spacing: 0.1em;
 }
@@ -984,24 +995,22 @@ button:hover {
     font-weight: 700;
 }
 
-.your-ride-section-cost {
-    color: #7b4d91;
-}
-
 .your-ride-section-route,
 .your-order-section-route {
     display: grid;
-    width: 100%;
-    gap: 4px;
-    margin: 10px 0 0;
+    width: fit-content;
+    max-width: 100%;
+    grid-template-columns: max-content minmax(0, 1fr);
+    column-gap: 10px;
+    row-gap: 4px;
+    margin: 10px auto 0;
     color: #667168;
-    font-size: 0.85rem;
+    font-size: 1.275rem;
     line-height: 1.35;
+    text-align: left;
 }
 
-.booking-flow-kicker,
-.your-ride-section-label,
-.your-order-section-label {
+.booking-flow-kicker {
     position: relative;
     display: block;
     width: fit-content;
@@ -1015,8 +1024,7 @@ button:hover {
     text-transform: uppercase;
 }
 
-.your-ride-section-label::after,
-.your-order-section-label::after {
+.booking-flow-kicker::after {
     position: absolute;
     right: 0;
     bottom: 0;
@@ -1052,12 +1060,13 @@ button:hover {
 }
 
 .booking-secondary-button {
-    background: rgba(255, 255, 255, 0.72);
-    color: #28583f;
+    background: #7b4d91;
+    border-color: #7b4d91;
+    color: white;
 }
 
 .booking-secondary-button:hover {
-    background: white;
+    background: #7b4d91;
     transform: translateY(-1px);
 }
 
@@ -1068,22 +1077,25 @@ button:hover {
     cursor: not-allowed;
 }
 
-.booking-picker-wrap {
-    margin: 0 auto;
-}
-
 .booking-actions {
     display: flex;
     justify-content: center;
+    width: 98%;
+    margin-right: auto;
+    margin-left: auto;
     gap: 10px;
     margin-top: 18px;
 }
 
 .time-slot-panel {
+    width: 98%;
+    margin: 5px auto;
     padding: 18px;
-    border: 1px solid rgba(70, 100, 80, 0.24);
-    border-radius: 10px;
-    background: rgba(255, 255, 255, 0.68);
+    border: 1px solid rgba(40, 88, 63, 0.35);
+    border-top: 3px solid #9a65b1;
+    border-radius: 8px;
+    background: linear-gradient(135deg, rgba(224, 250, 208, 0.9), rgba(248, 239, 251, 0.86));
+    color: #28583f;
     text-align: left;
 }
 
@@ -1175,7 +1187,7 @@ button:hover {
 .your-order-section p {
     margin: 6px 0 0;
     color: #28583f;
-    font-size: 0.95rem;
+    font-size: 1.425rem;
     font-weight: 700;
     line-height: 1.4;
 }
@@ -1189,7 +1201,7 @@ button:hover {
     width: fit-content;
     margin: 0;
     color: #7b4d91;
-    font-size: 1.2rem;
+    font-size: 1.8rem;
     line-height: 1;
 }
 
@@ -1199,7 +1211,7 @@ button:hover {
     justify-content: flex-start;
     flex-wrap: wrap;
     gap: 8px;
-    font-size: 1.16rem;
+    font-size: 1.74rem;
     line-height: 1;
     white-space: nowrap;
 }
@@ -1211,24 +1223,25 @@ button:hover {
 
 .your-order-section-fare-discounted-discount {
     color: #a14c5a;
-    font-size: 0.48rem;
+    font-size: 0.72rem;
 }
 
 .your-order-section-fare-discounted-final {
     padding-bottom: 7px;
     border-bottom: 3px solid #9a65b1;
     color: #7b4d91;
-    font-size: 1.12rem;
+    font-size: 1.68rem;
 }
 
 .your-order-section-fare-discounted-original {
     color: #28583f;
-    font-size: 0.8rem;
+    font-size: 1.2rem;
 }
 
 
 .booking-box {
-    max-width: 440px;
+    width: 98%;
+    max-width: none;
     margin: 20px auto 0;
     padding: 18px;
     border-top: 1px solid rgba(70, 100, 80, 0.24);
@@ -1267,7 +1280,8 @@ button:hover {
 }
 
 .booking-confirmed {
-    max-width: 520px;
+    width: 98%;
+    max-width: none;
     margin: 20px auto 0;
     padding: 22px;
     border: 1px solid rgba(70, 100, 80, 0.24);
@@ -1289,11 +1303,6 @@ button:hover {
 }
 
 @media (max-width: 700px) {
-    .booking-flow {
-        width: calc(100% - 20px);
-        padding: 16px 10px;
-    }
-
     .time-slot-panel {
         padding: 12px 8px;
     }

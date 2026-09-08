@@ -39,6 +39,7 @@ function FareCalculator() {
     const [promoApplied, setPromoApplied] = useState(false);
     const [promoMessage, setPromoMessage] = useState("");
     const [bookingModeSelected, setBookingModeSelected] = useState(false);
+    const [bookingModeTitle, setBookingModeTitle] = useState("");
     const [mapsReady, setMapsReady] = useState(false);
     const [BookingComponent, setBookingComponent] = useState(null);
 
@@ -51,6 +52,9 @@ function FareCalculator() {
 
     // Ref for the actual destination input element
     const destinationInputRef = useRef(null);
+
+    const bookingModeHistoryEntryRef = useRef(false);
+    const bookingHistoryEntryRef = useRef(false);
 
     useEffect(() => {
         setOptions({
@@ -99,6 +103,69 @@ function FareCalculator() {
 
     function handleNumberOfPedicabsChange(number) {
         setNumberOfPedicabs(number);
+    }
+
+    function handleBookingModeSelection(title) {
+        window.history.pushState(
+            { ...window.history.state, bookingModeSelected: true },
+            "",
+            window.location.href
+        );
+        bookingModeHistoryEntryRef.current = true;
+        setBookingModeTitle(title);
+        setBookingModeSelected(true);
+    }
+
+    function handleCancelBookingMode() {
+        setBookingModeTitle("");
+        setBookingModeSelected(false);
+    }
+
+    useEffect(() => {
+        function handleBrowserBack() {
+            if (bookingHistoryEntryRef.current) {
+                bookingHistoryEntryRef.current = false;
+                setBookingVisible(false);
+                return;
+            }
+
+            if (!bookingModeHistoryEntryRef.current) return;
+
+            bookingModeHistoryEntryRef.current = false;
+            handleCancelBookingMode();
+        }
+
+        window.addEventListener("popstate", handleBrowserBack);
+
+        return () => window.removeEventListener("popstate", handleBrowserBack);
+    }, []);
+
+    function handleBookingModeBack() {
+        if (bookingModeHistoryEntryRef.current) {
+            window.history.back();
+            return;
+        }
+
+        handleCancelBookingMode();
+    }
+
+    function openBooking() {
+        window.history.pushState(
+            { ...window.history.state, booking: true },
+            "",
+            window.location.href
+        );
+        bookingHistoryEntryRef.current = true;
+        setBookingVisible(true);
+    }
+
+    function closeBooking() {
+        if (bookingHistoryEntryRef.current) {
+            window.history.back();
+            return;
+        }
+
+        setBookingVisible(false);
     }
 
     function applyPromoCode() {
@@ -242,7 +309,7 @@ function FareCalculator() {
                 <button
                     type="button"
                     className="booking-mode-option"
-                    onClick={() => setBookingModeSelected(true)}
+                    onClick={() => handleBookingModeSelection("Book For Right Now")}
                 >
                     <span className="booking-mode-option-title">Book For Right Now</span>
                     <span className="booking-mode-option-description">
@@ -253,7 +320,7 @@ function FareCalculator() {
                 <button
                     type="button"
                     className="booking-mode-option"
-                    onClick={() => setBookingModeSelected(true)}
+                    onClick={() => handleBookingModeSelection("Book For Later Time/Date")}
                 >
                     <span className="booking-mode-option-title">Book For Later Time/Date</span>
                     <span className="booking-mode-option-description">
@@ -464,29 +531,29 @@ function FareCalculator() {
             Two React elements inside a single React Fragment (or container tag), inside a JSX expression. */}
 
             {bookingModeSelected && mapsReady && !bookingVisible && (
-                <>
+                <div className="fare-calculator-actions">
                     <button 
                         type="button" 
                         className="book-ride-button" 
-                        onClick={() => setBookingVisible(true)}
+                        onClick={openBooking}
                         disabled={!totalFare}
                     >
-                        Book this ride
+                        {bookingModeTitle}
                     </button>
 
                     <button 
                         type="button" 
-                        //className="cancel-ride-button"
-                        //onClick={handleCancel}
+                        className="book-ride-button fare-calculator-back-button"
+                        onClick={handleBookingModeBack}
                     >
-                        Cancel
+                        Go Back
                     </button>
-                </>
+                </div>
             )}
 
             {bookingModeSelected && mapsReady && bookingVisible && BookingComponent && (
                     <BookingComponent
-                        closeBooking={() => setBookingVisible(false)}
+                        closeBooking={closeBooking}
                         fare={totalFare}
                         numberOfPedicabs={numberOfPedicabs}
                         pickupAddress={pickupAddress}

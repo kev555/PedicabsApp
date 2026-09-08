@@ -70,7 +70,11 @@ function TimeSlot({ bookedSlots, setPickupDateTime, pickupAddress, destinationAd
     const timeSlots = selectedDate ? generateTimeSlots(selectedDate) : [];
 
     return (
-        <section className="time-slot-panel">
+        <div className="time-slot-panel">
+            <div className="time-slot-panel-title-wrap">
+                <p className="booking-flow-title">Choose a pickup date and time</p>
+            </div>
+
             <div className="time-slot-heading">
                 <span>01</span>
                 <div>
@@ -168,7 +172,7 @@ function TimeSlot({ bookedSlots, setPickupDateTime, pickupAddress, destinationAd
                     </div>
                 </div>
             )}
-        </section>
+        </div>
     );
 }
 
