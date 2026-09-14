@@ -38,10 +38,11 @@ function FareCalculator() {
     const [promoCode, setPromoCode] = useState("");
     const [promoApplied, setPromoApplied] = useState(false);
     const [promoMessage, setPromoMessage] = useState("");
-    const [bookingModeSelected, setBookingModeSelected] = useState(false);
-    const [bookingModeTitle, setBookingModeTitle] = useState("");
+    const [fareCalculationModeSelected, setFareCalculationModeSelected] = useState(false);
+    const [fareCalculationModeTitle, setFareCalculationModeTitle] = useState("");
     const [mapsReady, setMapsReady] = useState(false);
     const [BookingComponent, setBookingComponent] = useState(null);
+    const [userLocation, setUserLocation] = useState(null);
 
     // and one to load in booking.jsx component div
     const [bookingVisible, setBookingVisible] = useState(false);
@@ -53,7 +54,7 @@ function FareCalculator() {
     // Ref for the actual destination input element
     const destinationInputRef = useRef(null);
 
-    const bookingModeHistoryEntryRef = useRef(false);
+    const fareCalculationModeHistoryEntryRef = useRef(false);
     const bookingHistoryEntryRef = useRef(false);
 
     useEffect(() => {
@@ -105,20 +106,49 @@ function FareCalculator() {
         setNumberOfPedicabs(number);
     }
 
-    function handleBookingModeSelection(title) {
+    // so easy! :)
+    function requestUserLocation() {
+        if (!navigator.geolocation) {
+            console.log("Geolocation is not supported by this browser.");
+            return;
+        }
+
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                const location = {
+                    lat: position.coords.latitude,
+                    lng: position.coords.longitude
+                };
+
+                setUserLocation(location);
+                console.log("Captured user location:", location);
+            },
+            (error) => {
+                console.log("Geolocation permission or lookup failed:", error.message);
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 0
+            }
+        );
+    }
+
+    function handleFareCalculationModeSelection(title) {
         window.history.pushState(
-            { ...window.history.state, bookingModeSelected: true },
+            { ...window.history.state, fareCalculationModeSelected: true },
             "",
             window.location.href
         );
-        bookingModeHistoryEntryRef.current = true;
-        setBookingModeTitle(title);
-        setBookingModeSelected(true);
+        fareCalculationModeHistoryEntryRef.current = true;
+        setFareCalculationModeTitle(title);
+        setFareCalculationModeSelected(true);
+        requestUserLocation();
     }
 
-    function handleCancelBookingMode() {
-        setBookingModeTitle("");
-        setBookingModeSelected(false);
+    function handleCancelFareCalculationMode() {
+        setFareCalculationModeTitle("");
+        setFareCalculationModeSelected(false);
     }
 
     useEffect(() => {
@@ -129,24 +159,25 @@ function FareCalculator() {
                 return;
             }
 
-            if (!bookingModeHistoryEntryRef.current) return;
+            if (!fareCalculationModeHistoryEntryRef.current) return;
 
-            bookingModeHistoryEntryRef.current = false;
-            handleCancelBookingMode();
+            fareCalculationModeHistoryEntryRef.current = false;
+            handleCancelFareCalculationMode();
         }
 
         window.addEventListener("popstate", handleBrowserBack);
 
         return () => window.removeEventListener("popstate", handleBrowserBack);
+        
     }, []);
 
-    function handleBookingModeBack() {
-        if (bookingModeHistoryEntryRef.current) {
+    function handleFareCalculationModeBack() {
+        if (fareCalculationModeHistoryEntryRef.current) {
             window.history.back();
             return;
         }
 
-        handleCancelBookingMode();
+        handleCancelFareCalculationMode();
     }
 
     function openBooking() {
@@ -305,11 +336,11 @@ function FareCalculator() {
     return (
         <section className="content-box">
 
-            {!bookingModeSelected && <div className="booking-choice-panel">
+            {!fareCalculationModeSelected && <div className="booking-choice-panel">
                 <button
                     type="button"
                     className="booking-mode-option"
-                    onClick={() => handleBookingModeSelection("Book For Right Now")}
+                    onClick={() => handleFareCalculationModeSelection("Book For Right Now")}
                 >
                     <span className="booking-mode-option-title">Book For Right Now</span>
                     <span className="booking-mode-option-description">
@@ -320,7 +351,7 @@ function FareCalculator() {
                 <button
                     type="button"
                     className="booking-mode-option"
-                    onClick={() => handleBookingModeSelection("Book For Later Time/Date")}
+                    onClick={() => handleFareCalculationModeSelection("Book For Later Time/Date")}
                 >
                     <span className="booking-mode-option-title">Book For Later Time/Date</span>
                     <span className="booking-mode-option-description">
@@ -329,7 +360,7 @@ function FareCalculator() {
                 </button>
             </div>}
 
-            {bookingModeSelected && <div className="location-section-parent">
+            {fareCalculationModeSelected && <div className="location-section-parent">
                 {
                     ! mapsReady ? 
                     (<p 
@@ -424,7 +455,7 @@ function FareCalculator() {
                 }
             </div>}
 
-            <div className={`map-frame ${!bookingModeSelected ? "map-frame-preloaded" : ""}`}>
+            <div className={`map-frame ${!fareCalculationModeSelected ? "map-frame-preloaded" : ""}`}>
                 {mapsReady && <GoogleMap
                         mapContainerStyle={mapContainerStyle}
                         center={pickupCoordinates || mapCenterCoordinates}
@@ -442,7 +473,7 @@ function FareCalculator() {
 
             </div>
 
-            {bookingModeSelected && mapsReady && <div className="fare-calculation-section">
+            {fareCalculationModeSelected && mapsReady && <div className="fare-calculation-section">
                 <div className="fare-cost">
                     <div className="fare-cost-left-subbox">
                         <div className="fare-cost-left-subbox-title">Total Fare:</div>
@@ -530,7 +561,7 @@ function FareCalculator() {
                         {/* Terminology refresher: The following is:
             Two React elements inside a single React Fragment (or container tag), inside a JSX expression. */}
 
-            {bookingModeSelected && mapsReady && !bookingVisible && (
+            {fareCalculationModeSelected && mapsReady && !bookingVisible && (
                 <div className="fare-calculator-actions">
                     <button 
                         type="button" 
@@ -538,20 +569,20 @@ function FareCalculator() {
                         onClick={openBooking}
                         disabled={!totalFare}
                     >
-                        {bookingModeTitle}
+                        {fareCalculationModeTitle}
                     </button>
 
                     <button 
                         type="button" 
                         className="book-ride-button fare-calculator-back-button"
-                        onClick={handleBookingModeBack}
+                        onClick={handleFareCalculationModeBack}
                     >
                         Go Back
                     </button>
                 </div>
             )}
 
-            {bookingModeSelected && mapsReady && bookingVisible && BookingComponent && (
+            {fareCalculationModeSelected && mapsReady && bookingVisible && BookingComponent && (
                     <BookingComponent
                         closeBooking={closeBooking}
                         fare={totalFare}
