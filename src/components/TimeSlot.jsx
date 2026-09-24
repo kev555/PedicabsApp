@@ -161,7 +161,7 @@ function TimeSlot({ bookedSlots, setPickupDateTime, pickupAddress, destinationAd
                                         <strong className="your-order-section-fare your-order-section-fare-discounted">
                                             <span className="your-order-section-fare-discounted-original">${originalFare}</span>
                                             <span className="your-order-section-fare-discounted-discount">- ${discountAmount}</span>
-                                            <b className="your-order-section-fare-discounted-final">= ${fare}</b>
+                                            =  <b className="your-order-section-fare-discounted-final">${fare}</b>
                                         </strong>
                                     ) : (
                                         <strong className="your-order-section-fare">${fare}</strong>

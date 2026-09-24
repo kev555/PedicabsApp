@@ -51,7 +51,8 @@ function FareCalculator() {
     const pickupAutocompleteInstanceRef = useRef(null);
     const destinationAutocompleteInstanceRef = useRef(null);
 
-    // Ref for the actual destination input element
+    // Refs for the actual location input elements
+    const pickupInputRef = useRef(null);
     const destinationInputRef = useRef(null);
 
     const fareCalculationModeHistoryEntryRef = useRef(false);
@@ -135,6 +136,23 @@ function FareCalculator() {
     }
 
     function handleFareCalculationModeSelection(title) {
+
+    // First and most important - create a dummy history entry for the current URL
+    // (i.e. add an entry to the history stack). Now if the user presses the Back
+    // button, the browser will move the history pointer back to this dummy entry.
+    // Because the dummy entry has the same URL, the current document remains
+    // displayed rather than navigating to a different page.
+    //
+    // When the Back button is pressed, the popstate event will also fire. We
+    // listen for this event and manually update the UI using the same logic as
+    // the "Go Back" button.
+    //
+    // These two processes give the illusion that pressing the browser Back button
+    // directly navigates the UI, just as pressing the "Go Back" button does.
+
+    // This is a common pattern in single-page applications for integrating
+    // application UI state with the browser's history and Back/Forward buttons.
+
         window.history.pushState(
             { ...window.history.state, fareCalculationModeSelected: true },
             "",
@@ -149,6 +167,16 @@ function FareCalculator() {
     function handleCancelFareCalculationMode() {
         setFareCalculationModeTitle("");
         setFareCalculationModeSelected(false);
+    }
+
+    function handleFareCalculationModeBack() {
+        // just catch the back press, move the browsers history pointer and re-use the Cancel logic from above to adjust the state and thus UI
+        if (fareCalculationModeHistoryEntryRef.current) {
+            window.history.back();
+            return;
+        }
+
+        handleCancelFareCalculationMode();
     }
 
     useEffect(() => {
@@ -171,13 +199,24 @@ function FareCalculator() {
         
     }, []);
 
-    function handleFareCalculationModeBack() {
-        if (fareCalculationModeHistoryEntryRef.current) {
-            window.history.back();
+
+
+    // function clearFareAndBookingState() {
+    //     setDestinationCoordinatesFunc(null);
+    //     setDestinationAddress("");
+    //     setBaseFare(null);
+    //     setBookingVisible(false);
+    //     setPromoApplied(false);
+    //     setPromoMessage("");
+    // }
+
+    function handleQuickLocationSelection(quickLocation) {
+        if (!pickupSelected) {
+            handlePickupPlaceChanged(quickLocation);
             return;
         }
 
-        handleCancelFareCalculationMode();
+        handleDestinationPlaceChanged(quickLocation);
     }
 
     function openBooking() {
@@ -237,36 +276,44 @@ function FareCalculator() {
     // The following functions contain the logic for when a user selects a location from the Google Autocomplete suggestions Essentially they get the selected place from the Pickup or Destination Autocomplete instance, and then set the coordinates and address state variables accordingly. The useEffect hook below then runs to calculate the fare when both coordinates are populated and allow the user to proceed to the booking flow.
     // *The Qucik Location buttons bypass the Google Autocomplete suggestions and instead pass a location object directly to handleDestinationPlaceChanged, which then runs the same logic as if the user had selected a suggestion from the dropdown.
     
-    function handlePickupPlaceChanged() {
+    function handlePickupPlaceChanged(quickLocation = null) {
 
-        // Checks if the pickupAutocompleteInstanceRef.current is null, which means that the Google Autocomplete instance has not finished loading yet, as it's initialized with null (const pickupAutocompleteInstanceRef = useRef(null);), and remains null until handlePickupAutocompleteLoad above runs
-        if (!pickupAutocompleteInstanceRef.current) return;
+        const selectedPlace = quickLocation || pickupAutocompleteInstanceRef.current?.getPlace();
 
-        const selectedPlace = pickupAutocompleteInstanceRef.current.getPlace();
+        if (!selectedPlace) return;
+
+        selectedPlace.neat_address = selectedPlace.name + ", Cairns QLD";
 
         if (selectedPlace.geometry) {
+            const location = selectedPlace.geometry.location;
             const selectedCoordinates = {
-                lat: selectedPlace.geometry.location.lat(),
-                lng: selectedPlace.geometry.location.lng()
+                lat: typeof location.lat === "function" ? location.lat() : location.lat,
+                lng: typeof location.lng === "function" ? location.lng() : location.lng
             };
 
-            if (selectedPlace.name) {
-                selectedPlace.neat_address = selectedPlace.name + ", Cairns QLD";
+            setPickupCoordinatesFunc(selectedCoordinates);
+            setPickupAddress(selectedPlace.neat_address || selectedPlace.name || selectedPlace.formatted_address || selectedPlace.address);
+            setPickupSelected(true);
+
+            if (quickLocation && pickupInputRef.current) {
+                pickupInputRef.current.value = selectedPlace.address || selectedPlace.name || selectedPlace.formatted_address || selectedPlace.address;
             }
 
-            setPickupCoordinatesFunc(selectedCoordinates);
-            setPickupAddress(selectedPlace.neat_address  || selectedPlace.formatted_address);
-            setPickupSelected(true);
+
+            // These are trying to account for a state that isn't actually reachable as far as i can tell so I'm commenting them out for now. And also commenting out the clearFareAndBookingState function above as well since it is only used here.
+            // if (quickLocation && destinationInputRef.current) {
+            //     destinationInputRef.current.value = "";
+            // }
+            // if (quickLocation) {
+            //     clearFareAndBookingState();
+            // }
         }
     }
 
     function handleDestinationPlaceChanged(quickLocation = null) {
-        if (!pickupSelected) {
-            window.alert("Choose Pick up location first");
-            return;
-        }
 
         const selectedPlace = quickLocation || destinationAutocompleteInstanceRef.current?.getPlace();
+
         if (!selectedPlace) return;
 
         selectedPlace.neat_address = selectedPlace.name + ", Cairns QLD";
@@ -369,7 +416,7 @@ function FareCalculator() {
                     
                     ( <>
                             <section className="manual-location-panel">
-                                <h2 className="manual-location-panel-title">Select pick up and drop off locations</h2>
+                                <h2 className="manual-location-panel-title">Manually enter Pickup and Dropoff locations</h2>
 
                                 <div className="manual-location-panel-inputs">
 
@@ -384,6 +431,7 @@ function FareCalculator() {
                                     }}
                                 >
                                     <input
+                                        ref={pickupInputRef}
                                         type="text"
                                         className="custom-input"
                                         placeholder="Enter Pick Up Location.."
@@ -422,7 +470,6 @@ function FareCalculator() {
                                         type="text"
                                         className="custom-input"
                                         placeholder="Enter Drop Off Location.."
-                                        disabled={!pickupSelected}
                                         onChange={handleUserManuallyEditingDestination}
                                     />
                                 </Autocomplete>
@@ -432,7 +479,9 @@ function FareCalculator() {
                             </section>
 
                             <section className="quick-locations-panel">
-                                <h2 className="quick-locations-panel-title">Popular Destinations</h2>
+                                <h2 className="quick-locations-panel-title">
+                                    {pickupSelected ? "Choose A Popular Dropoff Location" : "Choose A Popular Pickup Location"}
+                                </h2>
 
                                 <div className="quick-locations-panel-options">
                                     {QUICK_LOCATIONS.map((loc) => {
@@ -442,7 +491,7 @@ function FareCalculator() {
                                                 type="button"
                                                 title={loc.shorthand_name}
                                                 className="quick-locations-panel-button"
-                                                onClick={() => handleDestinationPlaceChanged(loc)}
+                                                onClick={() => handleQuickLocationSelection(loc)}
                                             >
                                                 {loc.shorthand_name}
                                             </button>
