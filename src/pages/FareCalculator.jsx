@@ -136,23 +136,6 @@ function FareCalculator() {
     }
 
     function handleFareCalculationModeSelection(title) {
-
-    // First and most important - create a dummy history entry for the current URL
-    // (i.e. add an entry to the history stack). Now if the user presses the Back
-    // button, the browser will move the history pointer back to this dummy entry.
-    // Because the dummy entry has the same URL, the current document remains
-    // displayed rather than navigating to a different page.
-    //
-    // When the Back button is pressed, the popstate event will also fire. We
-    // listen for this event and manually update the UI using the same logic as
-    // the "Go Back" button.
-    //
-    // These two processes give the illusion that pressing the browser Back button
-    // directly navigates the UI, just as pressing the "Go Back" button does.
-
-    // This is a common pattern in single-page applications for integrating
-    // application UI state with the browser's history and Back/Forward buttons.
-
         window.history.pushState(
             { ...window.history.state, fareCalculationModeSelected: true },
             "",
@@ -167,16 +150,6 @@ function FareCalculator() {
     function handleCancelFareCalculationMode() {
         setFareCalculationModeTitle("");
         setFareCalculationModeSelected(false);
-    }
-
-    function handleFareCalculationModeBack() {
-        // just catch the back press, move the browsers history pointer and re-use the Cancel logic from above to adjust the state and thus UI
-        if (fareCalculationModeHistoryEntryRef.current) {
-            window.history.back();
-            return;
-        }
-
-        handleCancelFareCalculationMode();
     }
 
     useEffect(() => {
@@ -199,16 +172,23 @@ function FareCalculator() {
         
     }, []);
 
+    function handleFareCalculationModeBack() {
+        if (fareCalculationModeHistoryEntryRef.current) {
+            window.history.back();
+            return;
+        }
 
+        handleCancelFareCalculationMode();
+    }
 
-    // function clearFareAndBookingState() {
-    //     setDestinationCoordinatesFunc(null);
-    //     setDestinationAddress("");
-    //     setBaseFare(null);
-    //     setBookingVisible(false);
-    //     setPromoApplied(false);
-    //     setPromoMessage("");
-    // }
+    function clearFareAndBookingState() {
+        setDestinationCoordinatesFunc(null);
+        setDestinationAddress("");
+        setBaseFare(null);
+        setBookingVisible(false);
+        setPromoApplied(false);
+        setPromoMessage("");
+    }
 
     function handleQuickLocationSelection(quickLocation) {
         if (!pickupSelected) {
@@ -277,7 +257,6 @@ function FareCalculator() {
     // *The Qucik Location buttons bypass the Google Autocomplete suggestions and instead pass a location object directly to handleDestinationPlaceChanged, which then runs the same logic as if the user had selected a suggestion from the dropdown.
     
     function handlePickupPlaceChanged(quickLocation = null) {
-
         const selectedPlace = quickLocation || pickupAutocompleteInstanceRef.current?.getPlace();
 
         if (!selectedPlace) return;
@@ -299,14 +278,13 @@ function FareCalculator() {
                 pickupInputRef.current.value = selectedPlace.address || selectedPlace.name || selectedPlace.formatted_address || selectedPlace.address;
             }
 
+            if (quickLocation && destinationInputRef.current) {
+                destinationInputRef.current.value = "";
+            }
 
-            // These are trying to account for a state that isn't actually reachable as far as i can tell so I'm commenting them out for now. And also commenting out the clearFareAndBookingState function above as well since it is only used here.
-            // if (quickLocation && destinationInputRef.current) {
-            //     destinationInputRef.current.value = "";
-            // }
-            // if (quickLocation) {
-            //     clearFareAndBookingState();
-            // }
+            if (quickLocation) {
+                clearFareAndBookingState();
+            }
         }
     }
 
