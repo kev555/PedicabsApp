@@ -8,7 +8,7 @@ const cairnsServiceArea = {
     east: 145.85
 };
 
-// coordinatesStateSetterFunccan be either the setPickupCoordinates or setDestinationCoordinates state function
+// coordinatesStateSetterFunc can be either the pickup or dropoff coordinate setter.
 
 function AutocompleteForCairns({ placeholder, coordinatesStateSetterFunc, disabled = false, onLocationSelected, onInputChange, value }) 
 {
@@ -16,7 +16,7 @@ function AutocompleteForCairns({ placeholder, coordinatesStateSetterFunc, disabl
     const autocompleteInstanceRef = useRef(null);
 
     // Runs as soon as the component loads via onLoad. Gets passed a new autocompleteInstance and sets the autocomplete bounds for it
-    // Then stores it in the ref autocompleteInstanceRef. FareCalculator.jsx uses it for both the destination and pickup:
+    // Then stores it in autocompleteInstanceRef. FareCalculator.jsx uses it for both pickup and dropoff:
     function handleAutocompleteLoad(newAutocompleteInstance) {
         const cairnsServiceAreaObject =
             new window.google.maps.LatLngBounds(

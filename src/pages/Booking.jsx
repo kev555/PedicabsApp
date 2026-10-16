@@ -3,7 +3,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import TimeSlot from "../components/TimeSlot";
 import { supabase } from "../supabase";
 
-function Booking({ closeBooking, fare, numberOfPedicabs, pickupAddress, destinationAddress, originalFare, discountAmount, promoApplied }) {
+function Booking({ closeBooking, fare, numberOfPedicabs, pickupAddress, dropoffAddress, originalFare, discountAmount, promoApplied }) {
 
     const [bookedSlots, setBookedSlots] = useState([]);
     const [pickupDateTime, setPickupDateTime] = useState(null);
@@ -57,7 +57,7 @@ function Booking({ closeBooking, fare, numberOfPedicabs, pickupAddress, destinat
                             <span>{numberOfPedicabs} {numberOfPedicabs === 1 ? "Pedicab" : "Pedicabs"}</span>
                         </span>
                         <span className="your-ride-section-row"><b>From:</b><span>{pickupAddress}</span></span>
-                        <span className="your-ride-section-row"><b>To:</b><span>{destinationAddress}</span></span>
+                        <span className="your-ride-section-row"><b>To:</b><span>{dropoffAddress}</span></span>
                         <span className="your-ride-section-row">
                             <b>Cost:</b>
                             <span className="your-order-section-fare-wrapper">
@@ -84,7 +84,7 @@ function Booking({ closeBooking, fare, numberOfPedicabs, pickupAddress, destinat
                     setPickupDateTime={setPickupDateTime}
                     bookedSlots={bookedSlots}
                     pickupAddress={pickupAddress}
-                    destinationAddress={destinationAddress}
+                    dropoffAddress={dropoffAddress}
                     fare={fare}
                     numberOfPedicabs={numberOfPedicabs}
                     originalFare={originalFare}

@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-function TimeSlot({ bookedSlots, setPickupDateTime, pickupAddress, destinationAddress, fare, numberOfPedicabs, originalFare, discountAmount, promoApplied }) {
+function TimeSlot({ bookedSlots, setPickupDateTime, pickupAddress, dropoffAddress, fare, numberOfPedicabs, originalFare, discountAmount, promoApplied }) {
     // React remembers these values between renders.
     const [selectedDate, setSelectedDate] = useState(null);
     const [selectedTime, setSelectedTime] = useState(null);
@@ -139,7 +139,7 @@ function TimeSlot({ bookedSlots, setPickupDateTime, pickupAddress, destinationAd
                             <span>{numberOfPedicabs} {numberOfPedicabs === 1 ? "Pedicab" : "Pedicabs"}</span>
                         </span>
                         <span className="your-order-section-row"><b>From:</b><span>{pickupAddress}</span></span>
-                        <span className="your-order-section-row"><b>To:</b><span>{destinationAddress}</span></span>
+                        <span className="your-order-section-row"><b>To:</b><span>{dropoffAddress}</span></span>
                         <span className="your-order-section-row">
                             <b>Date:</b>
                             <span className="your-order-section-date">
