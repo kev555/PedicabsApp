@@ -186,6 +186,12 @@ function FareCalculator() {
     }
 
     function handleFareCalculationModeSelection(mode, title) {
+        // Add a dummy history entry for this UI state using the current URL.
+        // When Back returns to the previous entry on this page, popstate lets
+        // the handler below update the UI just like the in-app Go Back button.
+        //
+        // This connects browser Back/Forward navigation to UI state in the
+        // single-page app without needing a different URL for each screen.
         window.history.pushState(
             { ...window.history.state, fareCalculationModeSelected: true },
             "",
@@ -229,6 +235,8 @@ function FareCalculator() {
     }, []);
 
     function handleFareCalculationModeBack() {
+        // Move the browser history pointer back and reuse the popstate handler
+        // to update the UI. Fall back to the cancel logic if no entry is active.
         if (fareCalculationModeHistoryEntryRef.current) {
             window.history.back();
             return;
@@ -238,6 +246,8 @@ function FareCalculator() {
     }
 
     function handleQuickLocationSelection(quickLocation) {
+        // Quick picks pass their place data through the same handlers as Places
+        // selections; those handlers also update the autocomplete's displayed value.
         if (!pickupSelected) {
             pickupInputEditedRef.current = true;
             handlePickupPlaceChanged(quickLocation, true);
@@ -317,12 +327,9 @@ function FareCalculator() {
         }
     }
 
+    // Dropoff may be selected before pickup; fare calculation waits until both
+    // coordinate values are available.
     function handleDropoffPlaceChanged(selectedPlace, isQuickLocation = false) {
-        if (!pickupSelected) {
-            window.alert("Choose Pick up location first");
-            return;
-        }
-
         if (!selectedPlace) return;
 
         if (selectedPlace.geometry) {
@@ -363,7 +370,8 @@ function FareCalculator() {
         return Math.max(10, distanceInKilometres * 15);
     }
 
-    // totalFare is a normal variable, so it is recalculated during every render. It uses the current data from the persistent state variables baseFare and numberOfPedicabs, which is why it always reflects the latest total.It does not need to be state itself because it is fully derived from them and does not need to be stored independently between renders. I was previously recalculating the baseFare state variable, but there was no need as the distance wasn't changing. Now the totalFare is just a normal variable that is recalculated each render using the baseFare.
+    // totalFare is a normal variable, so it is recalculated during every render. 
+    // It uses the current data from the persistent state variables baseFare and numberOfPedicabs, which is why it always reflects the latest total.It does not need to be state itself because it is fully derived from them and does not need to be stored independently between renders. I was previously recalculating the baseFare state variable, but there was no need as the distance wasn't changing. Now the totalFare is just a normal variable that is recalculated each render using the baseFare.
     const totalFare = baseFare === null
         ? null
         : (baseFare * numberOfPedicabs * (promoApplied ? 0.85 : 1)).toFixed(2);
@@ -435,7 +443,7 @@ function FareCalculator() {
                     
                     ( <>
                             <section className="manual-location-panel">
-                                <h2 className="manual-location-panel-title">Select pick up and drop off locations</h2>
+                                <h2 className="manual-location-panel-title">Manually enter Pickup and Dropoff locations</h2>
 
                                 <div className="manual-location-panel-inputs">
 
@@ -452,7 +460,6 @@ function FareCalculator() {
                             <div>
                                 <AutocompleteForCairns
                                     placeholder="Enter Drop Off Location.."
-                                    disabled={!pickupSelected}
                                     autocompleteInstanceRef={dropoffAutocompleteInstanceRef}
                                     onPlaceSelected={handleDropoffPlaceChanged}
                                     onInputChange={handleUserManuallyEditingDropoff}
