@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { GoogleMap, Marker } from "@react-google-maps/api";
 import { importLibrary, setOptions } from "@googlemaps/js-api-loader";
 import AutocompleteForCairns from "../components/AutocompleteForCairns";
+import { cairnsServiceArea } from "../serviceArea";
 
 import QUICK_LOCATIONS_json from './locations.json';
 
@@ -33,9 +34,11 @@ function FareCalculator() {
     const [promoMessage, setPromoMessage] = useState("");
     const [fareCalculationModeSelected, setFareCalculationModeSelected] = useState(false);
     const [fareCalculationModeTitle, setFareCalculationModeTitle] = useState("");
+    const [bookingMode, setBookingMode] = useState(null);
     const [mapsReady, setMapsReady] = useState(false);
     const [BookingComponent, setBookingComponent] = useState(null);
     const [userLocation, setUserLocation] = useState(null);
+    const [initialPickupPlace, setInitialPickupPlace] = useState(null);
 
     // and one to load in booking.jsx component div
     const [bookingVisible, setBookingVisible] = useState(false);
@@ -43,6 +46,7 @@ function FareCalculator() {
     // References used to keep each Places widget available for quick-location updates.
     const pickupAutocompleteInstanceRef = useRef(null);
     const dropoffAutocompleteInstanceRef = useRef(null);
+    const pickupInputEditedRef = useRef(false);
 
     const fareCalculationModeHistoryEntryRef = useRef(false);
     const bookingHistoryEntryRef = useRef(false);
@@ -68,10 +72,12 @@ function FareCalculator() {
     }, []);
 
     function handleUserManuallyEditingPickup() {
+        pickupInputEditedRef.current = true;
         setBookingVisible(false);
         setPickupSelected(false);
         setPickupCoordinatesFunc(null);
         setPickupAddress("");
+        setInitialPickupPlace(null);
         setBaseFare(null);
         setPromoApplied(false);
         setPromoMessage("");
@@ -114,7 +120,20 @@ function FareCalculator() {
                 };
 
                 setUserLocation(location);
-                console.log("Captured user location:", location);
+                console.log("User coordinates:", location);
+
+                const isWithinServiceArea =
+                    location.lat >= cairnsServiceArea.south &&
+                    location.lat <= cairnsServiceArea.north &&
+                    location.lng >= cairnsServiceArea.west &&
+                    location.lng <= cairnsServiceArea.east;
+
+                if (!isWithinServiceArea) {
+                    console.log("User location showing as outside service area");
+                    return;
+                }
+
+                findNearestPlace(location);
             },
             (error) => {
                 console.log("Geolocation permission or lookup failed:", error.message);
@@ -127,20 +146,65 @@ function FareCalculator() {
         );
     }
 
-    function handleFareCalculationModeSelection(title) {
+    async function findNearestPlace(location) {
+        try {
+            const { places } = await window.google.maps.places.Place.searchNearby({
+                fields: ["displayName", "formattedAddress", "location"],
+                locationRestriction: {
+                    center: location,
+                    radius: 50000
+                },
+                maxResultCount: 1,
+                rankPreference: window.google.maps.places.SearchNearbyRankPreference.DISTANCE
+            });
+
+            const nearestPlace = places?.[0];
+            if (!nearestPlace) {
+                console.log("No nearby map entities found for user location.");
+                return;
+            }
+
+            if (!nearestPlace.location || !nearestPlace.displayName) {
+                console.error("Nearest map entity did not include a name and location.");
+                return;
+            }
+
+            console.log("Nearest map entity:", nearestPlace.displayName);
+            if (pickupInputEditedRef.current) return;
+
+            const nearestPickupPlace = {
+                geometry: { location: nearestPlace.location },
+                name: nearestPlace.displayName,
+                neat_address: nearestPlace.formattedAddress || nearestPlace.displayName,
+                address: nearestPlace.formattedAddress || nearestPlace.displayName
+            };
+            setInitialPickupPlace(nearestPickupPlace);
+            handlePickupPlaceChanged(nearestPickupPlace, true);
+        } catch (error) {
+            console.error("Google Places failed to find a nearby map entity", error);
+        }
+    }
+
+    function handleFareCalculationModeSelection(mode, title) {
         window.history.pushState(
             { ...window.history.state, fareCalculationModeSelected: true },
             "",
             window.location.href
         );
         fareCalculationModeHistoryEntryRef.current = true;
+        setBookingMode(mode);
         setFareCalculationModeTitle(title);
         setFareCalculationModeSelected(true);
-        requestUserLocation();
+        // Only an immediate booking needs the rider's current location.
+        if (mode === "now") {
+            pickupInputEditedRef.current = false;
+            requestUserLocation();
+        }
     }
 
     function handleCancelFareCalculationMode() {
         setFareCalculationModeTitle("");
+        setBookingMode(null);
         setFareCalculationModeSelected(false);
     }
 
@@ -175,6 +239,7 @@ function FareCalculator() {
 
     function handleQuickLocationSelection(quickLocation) {
         if (!pickupSelected) {
+            pickupInputEditedRef.current = true;
             handlePickupPlaceChanged(quickLocation, true);
             return;
         }
@@ -228,7 +293,7 @@ function FareCalculator() {
                 lng: typeof location.lng === "function" ? location.lng() : location.lng
             };
 
-            if (selectedPlace.name) {
+            if (selectedPlace.name && !selectedPlace.neat_address) {
                 selectedPlace.neat_address = selectedPlace.name + ", Cairns QLD";
             }
 
@@ -338,7 +403,7 @@ function FareCalculator() {
                 <button
                     type="button"
                     className="booking-mode-option"
-                    onClick={() => handleFareCalculationModeSelection("Book For Right Now")}
+                    onClick={() => handleFareCalculationModeSelection("now", "Book For Right Now")}
                 >
                     <span className="booking-mode-option-title">Book For Right Now</span>
                     <span className="booking-mode-option-description">
@@ -349,7 +414,7 @@ function FareCalculator() {
                 <button
                     type="button"
                     className="booking-mode-option"
-                    onClick={() => handleFareCalculationModeSelection("Book For Later Time/Date")}
+                    onClick={() => handleFareCalculationModeSelection("later", "Book For Later Time/Date")}
                 >
                     <span className="booking-mode-option-title">Book For Later Time/Date</span>
                     <span className="booking-mode-option-description">
@@ -377,6 +442,7 @@ function FareCalculator() {
                                     autocompleteInstanceRef={pickupAutocompleteInstanceRef}
                                     onPlaceSelected={handlePickupPlaceChanged}
                                     onInputChange={handleUserManuallyEditingPickup}
+                                    initialPlace={initialPickupPlace}
                                 />
                             </div>
 
@@ -436,7 +502,7 @@ function FareCalculator() {
             <div className={`map-frame ${!fareCalculationModeSelected ? "map-frame-preloaded" : ""}`}>
                 {mapsReady && <GoogleMap
                         mapContainerStyle={mapContainerStyle}
-                        center={pickupCoordinates || mapCenterCoordinates}
+                        center={pickupCoordinates || userLocation || mapCenterCoordinates}
                         zoom={14}
                         options={{
                             mapTypeControl: false,
@@ -563,6 +629,7 @@ function FareCalculator() {
             {fareCalculationModeSelected && mapsReady && bookingVisible && BookingComponent && (
                     <BookingComponent
                         closeBooking={closeBooking}
+                        bookingMode={bookingMode}
                         fare={totalFare}
                         numberOfPedicabs={numberOfPedicabs}
                         pickupAddress={pickupAddress}

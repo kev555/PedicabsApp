@@ -1,16 +1,11 @@
 import { useEffect, useRef, useState } from "react";
-
-const cairnsServiceArea = {
-    south: -16.98,
-    west: 145.70,
-    north: -16.85,
-    east: 145.85
-};
+import { cairnsServiceArea } from "../serviceArea";
 
 // The Places (New) data API restricts suggestions to Australia and the Cairns service area.
 
-function AutocompleteForCairns({ placeholder, disabled = false, autocompleteInstanceRef, onPlaceSelected, onInputChange }) {
-    const [inputValue, setInputValue] = useState("");
+function AutocompleteForCairns({ placeholder, disabled = false, autocompleteInstanceRef, onPlaceSelected, onInputChange, initialPlace }) {
+    const [inputValue, setInputValue] = useState(null);
+    const displayedInputValue = inputValue ?? initialPlace?.address ?? initialPlace?.name ?? "";
     const [suggestions, setSuggestions] = useState([]);
     const callbacksRef = useRef({ onPlaceSelected, onInputChange });
     const sessionTokenRef = useRef(null);
@@ -55,11 +50,11 @@ function AutocompleteForCairns({ placeholder, disabled = false, autocompleteInst
 
     // Debounce prediction lookups and ignore responses for outdated queries.
     useEffect(() => {
-        if (skipSearchForValueRef.current === inputValue) {
+        if (skipSearchForValueRef.current === displayedInputValue) {
             skipSearchForValueRef.current = null;
             return undefined;
         }
-        if (disabled || !inputValue.trim()) return undefined;
+        if (inputValue === null || disabled || !displayedInputValue.trim()) return undefined;
 
         const requestSequence = requestSequenceRef.current;
         const timer = window.setTimeout(async () => {
@@ -68,7 +63,7 @@ function AutocompleteForCairns({ placeholder, disabled = false, autocompleteInst
                 sessionTokenRef.current ??= new placesLibrary.AutocompleteSessionToken();
                 const { suggestions: placeSuggestions } =
                     await placesLibrary.AutocompleteSuggestion.fetchAutocompleteSuggestions({
-                        input: inputValue,
+                        input: displayedInputValue,
                         includedRegionCodes: ["au"],
                         locationRestriction: cairnsServiceArea,
                         sessionToken: sessionTokenRef.current
@@ -86,7 +81,7 @@ function AutocompleteForCairns({ placeholder, disabled = false, autocompleteInst
         }, 200);
 
         return () => window.clearTimeout(timer);
-    }, [disabled, inputValue]);
+    }, [disabled, displayedInputValue, inputValue]);
 
     async function handleSuggestionSelected(prediction) {
         const requestSequence = ++requestSequenceRef.current;
@@ -126,7 +121,7 @@ function AutocompleteForCairns({ placeholder, disabled = false, autocompleteInst
                 className="custom-input"
                 placeholder={placeholder}
                 disabled={disabled}
-                value={inputValue}
+                value={displayedInputValue}
                 onChange={handleInputChange}
                 onKeyDown={(event) => {
                     if (event.key === "Escape") {

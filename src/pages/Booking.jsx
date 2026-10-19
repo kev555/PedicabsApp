@@ -3,7 +3,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import TimeSlot from "../components/TimeSlot";
 import { supabase } from "../supabase";
 
-function Booking({ closeBooking, fare, numberOfPedicabs, pickupAddress, dropoffAddress, originalFare, discountAmount, promoApplied }) {
+function Booking({ closeBooking, bookingMode, fare, numberOfPedicabs, pickupAddress, dropoffAddress, originalFare, discountAmount, promoApplied }) {
 
     const [bookedSlots, setBookedSlots] = useState([]);
     const [pickupDateTime, setPickupDateTime] = useState(null);
@@ -51,6 +51,7 @@ function Booking({ closeBooking, fare, numberOfPedicabs, pickupAddress, dropoffA
             <div className="booking-flow-header">
                 <div className="your-ride-section">
                     <span className="your-ride-section-label">Your ride</span>
+                    <span>{bookingMode === "now" ? "Booking for right now" : "Booking for later"}</span>
                     <div className="your-ride-section-route">
                         <span className="your-ride-section-row">
                             <b>Cabs:</b>
