@@ -374,6 +374,9 @@ function FareCalculator() {
         ? null
         : (baseFare * numberOfPedicabs * 0.15).toFixed(2);
 
+    // Zoom two levels closer once the pickup pin is known.
+    const mapZoom = pickupCoordinates ? 16 : 14;
+
     useEffect(() => {
         console.log("useEffect ran");
 
@@ -503,7 +506,7 @@ function FareCalculator() {
                 {mapsReady && <GoogleMap
                         mapContainerStyle={mapContainerStyle}
                         center={pickupCoordinates || userLocation || mapCenterCoordinates}
-                        zoom={14}
+                        zoom={mapZoom}
                         options={{
                             mapTypeControl: false,
                             streetViewControl: false,
