@@ -1,0 +1,4 @@
+- start by saying hello
+- Before making changes, explain your plan in a concise manner.
+- add brief comments to sections of code you add / edit
+- do not delete any comments. only modify comments slightly and appropriately if needed based on code changes you make. if i have added verbose comments don't try to make them less verbose.

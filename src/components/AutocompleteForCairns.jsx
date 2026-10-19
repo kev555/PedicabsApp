@@ -1,5 +1,4 @@
-import { useRef } from "react";
-import { Autocomplete } from "@react-google-maps/api";
+import { useEffect, useRef, useState } from "react";
 
 const cairnsServiceArea = {
     south: -16.98,
@@ -8,60 +7,157 @@ const cairnsServiceArea = {
     east: 145.85
 };
 
-// coordinatesStateSetterFunc can be either the pickup or dropoff coordinate setter.
+// The Places (New) data API restricts suggestions to Australia and the Cairns service area.
 
-function AutocompleteForCairns({ placeholder, coordinatesStateSetterFunc, disabled = false, onLocationSelected, onInputChange, value }) 
-{
-    // although this ref wont save a re-render because the locations vaiables themselfs are state, is still good as Separation of Render Data vs. Instance Data
-    const autocompleteInstanceRef = useRef(null);
+function AutocompleteForCairns({ placeholder, disabled = false, autocompleteInstanceRef, onPlaceSelected, onInputChange }) {
+    const [inputValue, setInputValue] = useState("");
+    const [suggestions, setSuggestions] = useState([]);
+    const callbacksRef = useRef({ onPlaceSelected, onInputChange });
+    const sessionTokenRef = useRef(null);
+    const requestSequenceRef = useRef(0);
+    const skipSearchForValueRef = useRef(null);
 
-    // Runs as soon as the component loads via onLoad. Gets passed a new autocompleteInstance and sets the autocomplete bounds for it
-    // Then stores it in autocompleteInstanceRef. FareCalculator.jsx uses it for both pickup and dropoff:
-    function handleAutocompleteLoad(newAutocompleteInstance) {
-        const cairnsServiceAreaObject =
-            new window.google.maps.LatLngBounds(
-                { lat: cairnsServiceArea.south, lng: cairnsServiceArea.west },
-                { lat: cairnsServiceArea.north, lng: cairnsServiceArea.east }
-            );
-        newAutocompleteInstance.setBounds(cairnsServiceAreaObject);
-        autocompleteInstanceRef.current = newAutocompleteInstance;
+    // Keep the widget's event handlers connected to the latest React callbacks.
+    useEffect(() => {
+        callbacksRef.current = { onPlaceSelected, onInputChange };
+    }, [onPlaceSelected, onInputChange]);
+
+    // Expose a small value setter so quick-location selections can update the input.
+    useEffect(() => {
+        if (!autocompleteInstanceRef) return undefined;
+
+        autocompleteInstanceRef.current = {
+            setValue(value) {
+                skipSearchForValueRef.current = value;
+                setInputValue(value);
+                setSuggestions([]);
+                requestSequenceRef.current += 1;
+            }
+        };
+
+        return () => {
+            autocompleteInstanceRef.current = null;
+        };
+    }, [autocompleteInstanceRef]);
+
+    function handleInputChange(event) {
+        const value = event.target.value;
+        skipSearchForValueRef.current = null;
+        setInputValue(value);
+        callbacksRef.current.onInputChange?.();
+        requestSequenceRef.current += 1;
+
+        if (!value.trim()) {
+            setSuggestions([]);
+            sessionTokenRef.current = null;
+        }
     }
 
-    // Get the coordinates of the selected location
-    function handlePlaceChanged() {
-        if (!autocompleteInstanceRef.current) return;
-        const selectedPlace = autocompleteInstanceRef.current.getPlace();
-        if (selectedPlace.geometry) {
-            const selectedCoordinates = {
-                lat: selectedPlace.geometry.location.lat(),
-                lng: selectedPlace.geometry.location.lng()
-            };
+    // Debounce prediction lookups and ignore responses for outdated queries.
+    useEffect(() => {
+        if (skipSearchForValueRef.current === inputValue) {
+            skipSearchForValueRef.current = null;
+            return undefined;
+        }
+        if (disabled || !inputValue.trim()) return undefined;
 
-            coordinatesStateSetterFunc(selectedCoordinates);
-            onLocationSelected?.(selectedCoordinates, selectedPlace.formatted_address || selectedPlace.name || "");
+        const requestSequence = requestSequenceRef.current;
+        const timer = window.setTimeout(async () => {
+            try {
+                const placesLibrary = window.google.maps.places;
+                sessionTokenRef.current ??= new placesLibrary.AutocompleteSessionToken();
+                const { suggestions: placeSuggestions } =
+                    await placesLibrary.AutocompleteSuggestion.fetchAutocompleteSuggestions({
+                        input: inputValue,
+                        includedRegionCodes: ["au"],
+                        locationRestriction: cairnsServiceArea,
+                        sessionToken: sessionTokenRef.current
+                    });
+
+                if (requestSequence === requestSequenceRef.current) {
+                    setSuggestions(placeSuggestions.filter((suggestion) => suggestion.placePrediction));
+                }
+            } catch (error) {
+                if (requestSequence === requestSequenceRef.current) {
+                    setSuggestions([]);
+                    console.error("Google Places failed to fetch autocomplete suggestions", error);
+                }
+            }
+        }, 200);
+
+        return () => window.clearTimeout(timer);
+    }, [disabled, inputValue]);
+
+    async function handleSuggestionSelected(prediction) {
+        const requestSequence = ++requestSequenceRef.current;
+        setSuggestions([]);
+
+        try {
+            const place = prediction.toPlace();
+            await place.fetchFields({
+                fields: ["location", "displayName", "formattedAddress"]
+            });
+
+            if (requestSequence !== requestSequenceRef.current) return;
+            if (!place.location) {
+                console.error("Selected place did not include a location.");
+                return;
+            }
+
+            const address = place.formattedAddress || place.displayName || "";
+            skipSearchForValueRef.current = address;
+            setInputValue(address);
+            sessionTokenRef.current = null;
+            callbacksRef.current.onPlaceSelected?.({
+                geometry: { location: place.location },
+                name: place.displayName,
+                formatted_address: place.formattedAddress,
+                address
+            });
+        } catch (error) {
+            console.error("Google Places failed to load the selected place", error);
         }
     }
 
     return (
-        <div>
-            <Autocomplete
-                onLoad={handleAutocompleteLoad}
-                onPlaceChanged={handlePlaceChanged}
-                options={{
-                    componentRestrictions: { country: "au" },
-                    bounds: cairnsServiceArea,
-                    strictBounds: true
+        <div className="places-autocomplete-container">
+            <input
+                type="text"
+                className="custom-input"
+                placeholder={placeholder}
+                disabled={disabled}
+                value={inputValue}
+                onChange={handleInputChange}
+                onKeyDown={(event) => {
+                    if (event.key === "Escape") {
+                        requestSequenceRef.current += 1;
+                        setSuggestions([]);
+                    }
                 }}
-            >
-                <input
-                    type="text"
-                    className="custom-input"
-                    placeholder={placeholder}
-                    disabled={disabled}
-                    value={value}
-                    onChange={(event) => onInputChange?.(event.target.value)}
-                />
-            </Autocomplete>
+                aria-autocomplete="list"
+                aria-expanded={suggestions.length > 0}
+            />
+            {suggestions.length > 0 && (
+                <ul className="places-autocomplete-suggestions" role="listbox">
+                    {suggestions.map((suggestion) => {
+                        const prediction = suggestion.placePrediction;
+                        const label = prediction.text.toString();
+                        return (
+                            <li key={prediction.placeId} role="presentation">
+                                <button
+                                    type="button"
+                                    role="option"
+                                    className="places-autocomplete-suggestion"
+                                    onMouseDown={(event) => event.preventDefault()}
+                                    onClick={() => handleSuggestionSelected(prediction)}
+                                >
+                                    {label}
+                                </button>
+                            </li>
+                        );
+                    })}
+                </ul>
+            )}
         </div>
     );
 }
