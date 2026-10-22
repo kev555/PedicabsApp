@@ -218,8 +218,47 @@ button:hover {
     background: rgba(235, 239, 235, 0.8);
 }
 
+.places-autocomplete-container {
+    position: relative;
+    width: 100%;
+    min-width: 0;
+}
 
-/* Shared parent box for manual entry and quick-pick panels */
+.places-autocomplete-suggestions {
+    position: absolute;
+    top: calc(100% + 2px);
+    right: 0;
+    left: 0;
+    z-index: 5;
+    max-height: 240px;
+    margin: 0;
+    padding: 4px;
+    overflow-y: auto;
+    border: 1px solid rgba(70, 100, 80, 0.28);
+    border-radius: 8px;
+    background: white;
+    box-shadow: 0 4px 12px rgba(50, 70, 55, 0.12);
+}
+
+.places-autocomplete-suggestion {
+    width: 100%;
+    padding: 8px 10px;
+    border: 0;
+    border-radius: 5px;
+    background: transparent;
+    color: #333;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.places-autocomplete-suggestion:hover,
+.places-autocomplete-suggestion:focus {
+    background: #f8effb;
+    outline: none;
+}
+
+/* Shared parent keeps manual entry above the quick-pick panel */
 
 .location-section-parent {
     width: 98%;
