@@ -447,6 +447,24 @@ function FareCalculator() {
 
                                 <div className="manual-location-panel-inputs">
 
+
+
+                                    {/* <AutocompleteForCairns
+                                        placeholder="Enter Pick Up Location.."
+                                        autocompleteInstanceRef={pickupAutocompleteInstanceRef}
+                                        onPlaceSelected={handlePickupPlaceChanged}
+                                        onInputChange={handleUserManuallyEditingPickup}
+                                        initialPlace={initialPickupPlace}
+                                    />
+
+                                    <AutocompleteForCairns
+                                        placeholder="Enter Drop Off Location.."
+                                        autocompleteInstanceRef={dropoffAutocompleteInstanceRef}
+                                        onPlaceSelected={handleDropoffPlaceChanged}
+                                        onInputChange={handleUserManuallyEditingDropoff}
+                                    /> */}
+
+
                             <div>
                                 {/* Restore selected addresses when the calculator inputs remount. */}
                                 <AutocompleteForCairns
