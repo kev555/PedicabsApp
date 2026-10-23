@@ -47,6 +47,7 @@ function FareCalculator() {
     const pickupAutocompleteInstanceRef = useRef(null);
     const dropoffAutocompleteInstanceRef = useRef(null);
     const pickupInputEditedRef = useRef(false);
+    const quickLocationTargetRef = useRef(null);
     const mapRef = useRef(null);
 
     const fareCalculationModeHistoryEntryRef = useRef(false);
@@ -250,9 +251,11 @@ function FareCalculator() {
     function handleQuickLocationSelection(quickLocation) {
         // Quick picks pass their place data through the same handlers as Places
         // selections; those handlers also update the autocomplete's displayed value.
-        if (!pickupSelected) {
+        const target = quickLocationTargetRef.current ?? (pickupSelected ? "dropoff" : "pickup");
+        if (target === "pickup") {
             pickupInputEditedRef.current = true;
             handlePickupPlaceChanged(quickLocation, true);
+            quickLocationTargetRef.current = "dropoff"; // make sure the next quick pick goes to dropoff (better to rest on dropoff than constant switching, so after one click always reest to dropoff)
             return;
         }
 
@@ -487,6 +490,7 @@ function FareCalculator() {
                                     autocompleteInstanceRef={pickupAutocompleteInstanceRef}
                                     onPlaceSelected={handlePickupPlaceChanged}
                                     onInputChange={handleUserManuallyEditingPickup}
+                                    onInputClick={() => { quickLocationTargetRef.current = "pickup"; }}
                                     initialPlace={pickupAddress ? { address: pickupAddress } : initialPickupPlace}
                                 />
                             </div>
@@ -497,6 +501,7 @@ function FareCalculator() {
                                     autocompleteInstanceRef={dropoffAutocompleteInstanceRef}
                                     onPlaceSelected={handleDropoffPlaceChanged}
                                     onInputChange={handleUserManuallyEditingDropoff}
+                                    onInputClick={() => { quickLocationTargetRef.current = "dropoff"; }}
                                     initialPlace={dropoffAddress ? { address: dropoffAddress } : null}
                                 />
                                     {/* 
@@ -520,7 +525,7 @@ function FareCalculator() {
 
                             <section className="quick-locations-panel">
                                 <h2 className="quick-locations-panel-title">
-                                    {pickupSelected ? "Popular Dropoff Locations" : "Popular Pickup Locations"}
+                                    Popular Locations
                                 </h2>
 
                                 <div className="quick-locations-panel-options">

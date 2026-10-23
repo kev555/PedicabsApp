@@ -985,8 +985,20 @@ button:hover {
     text-transform: uppercase;
 }
 
+.booking-flow-title,
+.your-ride-section-label,
+.your-order-section-label {
+    color: #1e4632;
+    font-weight: 800;
+}
+
 .booking-flow-title {
     margin: 20px auto 8px;
+}
+
+.your-ride-booking-mode {
+    display: block;
+    padding-top: 10px;
 }
 
 .your-ride-section-label,

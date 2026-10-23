@@ -51,7 +51,9 @@ function Booking({ closeBooking, bookingMode, fare, numberOfPedicabs, pickupAddr
             <div className="booking-flow-header">
                 <div className="your-ride-section">
                     <span className="your-ride-section-label">Your ride</span>
-                    <span>{bookingMode === "now" ? "Booking for right now" : "Booking for later"}</span>
+                    <span className="your-ride-booking-mode">
+                        {bookingMode === "now" ? "Booking for right now" : "Booking for later"}
+                    </span>
                     <div className="your-ride-section-route">
                         <span className="your-ride-section-row">
                             <b>Cabs:</b>

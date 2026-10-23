@@ -1,22 +1,22 @@
 import { useEffect, useRef, useState } from "react";
 import { cairnsServiceArea } from "../serviceArea";
 
-function AutocompleteForCairns({ placeholder, disabled = false, autocompleteInstanceRef, onPlaceSelected, onInputChange, initialPlace }) {
+function AutocompleteForCairns({ placeholder, disabled = false, autocompleteInstanceRef, onPlaceSelected, onInputChange, onInputClick, initialPlace }) {
     // App-specific: preserve the parent's selected address until this field is edited.
     const [inputValue, setInputValue] = useState(null);
     const displayedInputValue = inputValue ?? initialPlace?.address ?? initialPlace?.name ?? "";
 
     // Places/async plumbing: keep each field's suggestions, session, and request state independent.
     const [suggestions, setSuggestions] = useState([]);
-    const callbacksRef = useRef({ onPlaceSelected, onInputChange });
+    const callbacksRef = useRef({ onPlaceSelected, onInputChange, onInputClick });
     const sessionTokenRef = useRef(null);
     const requestSequenceRef = useRef(0);
     const skipSearchForValueRef = useRef(null);
 
     // React plumbing: async handlers use the latest parent callbacks without being recreated.
     useEffect(() => {
-        callbacksRef.current = { onPlaceSelected, onInputChange };
-    }, [onPlaceSelected, onInputChange]);
+        callbacksRef.current = { onPlaceSelected, onInputChange, onInputClick };
+    }, [onPlaceSelected, onInputChange, onInputClick]);
 
     // App-specific: let FareCalculator's quick-location buttons set the displayed text without searching it.
     useEffect(() => {
@@ -128,7 +128,10 @@ function AutocompleteForCairns({ placeholder, disabled = false, autocompleteInst
                 disabled={disabled}
                 value={displayedInputValue}
                 onChange={handleInputChange}
-                onClick={(event) => event.currentTarget.select()}
+                onClick={(event) => {
+                    event.currentTarget.select();
+                    callbacksRef.current.onInputClick?.();
+                }}
                 onKeyDown={(event) => {
                     if (event.key === "Escape") {
                         requestSequenceRef.current += 1;
@@ -144,7 +147,15 @@ function AutocompleteForCairns({ placeholder, disabled = false, autocompleteInst
                     className="places-autocomplete-clear-button"
                     aria-label="Clear location text"
                     onMouseDown={(event) => event.preventDefault()}
-                    onClick={() => setInputValue("")}
+                    onClick={() => {
+                        callbacksRef.current.onInputClick?.();
+                        skipSearchForValueRef.current = null;
+                        setInputValue("");
+                        setSuggestions([]);
+                        sessionTokenRef.current = null;
+                        requestSequenceRef.current += 1;
+                        callbacksRef.current.onInputChange?.();
+                    }}
                 >
                     ×
                 </button>
