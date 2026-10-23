@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { GoogleMap, Marker } from "@react-google-maps/api";
 import { importLibrary, setOptions } from "@googlemaps/js-api-loader";
 import AutocompleteForCairns from "../components/AutocompleteForCairns";
@@ -47,6 +47,7 @@ function FareCalculator() {
     const pickupAutocompleteInstanceRef = useRef(null);
     const dropoffAutocompleteInstanceRef = useRef(null);
     const pickupInputEditedRef = useRef(false);
+    const mapRef = useRef(null);
 
     const fareCalculationModeHistoryEntryRef = useRef(false);
     const bookingHistoryEntryRef = useRef(false);
@@ -85,7 +86,8 @@ function FareCalculator() {
 
     // Clear the selected dropoff and fare when the user edits the dropoff input.
     // If the user starts changing the destination after selecting a place, clear the previously selected destination and fare.
-    // But the text will remain in the input so they are free to reuse the tex/change it slightly and continue to get suggestions from Google Autocomplete.
+    // But the text will remain in the input so they are free to reuse the text/change it slightly 
+    // and continue to get suggestions from Google Autocomplete.
     // !!So...!! all this is doing is clearing the destination coordinates and fare state variables to null, not the input text itself.
     // Also at first I thought this would cause a re-render on every character entered by the user, 
     // but actually a re-render only happens when the state variables are different from last time 
@@ -286,8 +288,12 @@ function FareCalculator() {
 
     // These handlers process Places (New) selections or quick-location objects and update coordinates and addresses for fare calculation.
 
-    // The following functions contain the logic for when a user selects a location from the Places suggestions. They set the coordinates and address state variables; the useEffect hook below then calculates the fare when both coordinates are populated.
+    // The following functions contain the logic for when a user selects a location from the Places suggestions. 
+    // They set the coordinates and address state variables; 
+    // the useEffect hook below then calculates the fare when both coordinates are populated.
     // *The Quick Location buttons bypass the Places suggestions and instead pass a location object directly to these handlers.
+    // *The Auto Location when use selects pick up now also bypass the Places suggestions and instead pass a location object directly to these handlers.
+
     
     function handlePickupPlaceChanged(selectedPlace, isQuickLocation = false) {
         if (!selectedPlace) return;
@@ -316,14 +322,6 @@ function FareCalculator() {
             if (isQuickLocation && pickupAutocompleteInstanceRef.current) {
                 pickupAutocompleteInstanceRef.current.setValue(selectedPlace.address || selectedPlace.name || selectedPlace.formatted_address || "");
             }
-
-            // I DONT THINK THIS IS NECESSARY:
-            // THE EXPLINATION AI GAVE WAS:
-            // "When changing pickup via a quick button, this clears the old dropoff from both places: the input’s visible text is emptied, and the handler clears the saved dropoff and fare-related state. Otherwise, the app could keep calculating or displaying a fare for the previous dropoff even though the pickup changed."
-            // if (isQuickLocation && dropoffAutocompleteInstanceRef.current) {
-            //     dropoffAutocompleteInstanceRef.current.setValue("");
-            //     handleUserManuallyEditingDropoff();
-            // }
         }
     }
 
@@ -350,6 +348,7 @@ function FareCalculator() {
     }
 
     // Calculate the fare using the Routes API's bicycling distance.
+    // Runs when either pickupCoordinates or dropoffCoordinates changes AND when both are not null
     async function calculateFare(pickupCoordinates, dropoffCoordinates) {
         const { Route } = await importLibrary("routes");
         const { routes } = await Route.computeRoutes({
@@ -370,20 +369,39 @@ function FareCalculator() {
         return Math.max(10, distanceInKilometres * 15);
     }
 
+    // totalfare is a derived value that depends on baseFare, numberOfPedicabs, and promoApplied.
     // totalFare is a normal variable, so it is recalculated during every render. 
-    // It uses the current data from the persistent state variables baseFare and numberOfPedicabs, which is why it always reflects the latest total.It does not need to be state itself because it is fully derived from them and does not need to be stored independently between renders. I was previously recalculating the baseFare state variable, but there was no need as the distance wasn't changing. Now the totalFare is just a normal variable that is recalculated each render using the baseFare.
-    const totalFare = baseFare === null
-        ? null
+    // It uses the current data from the persistent state variables baseFare and numberOfPedicabs, 
+    // which is why it always reflects the latest total.
+    // It does not need to be state itself because it is fully derived from them 
+    // and does not need to be stored independently between renders. 
+    // I was previously recalculating the baseFare state variable, 
+    // but there was no need as the distance wasn't changing. 
+    // Now the totalFare is just a normal variable that is recalculated each render using the baseFare.
+    const totalFare = baseFare === null ? null
         : (baseFare * numberOfPedicabs * (promoApplied ? 0.85 : 1)).toFixed(2);
-    const originalTotalFare = baseFare === null
-        ? null
+    const originalTotalFare = baseFare === null ? null
         : (baseFare * numberOfPedicabs).toFixed(2);
-    const discountAmount = baseFare === null
-        ? null
+    const discountAmount = baseFare === null ? null
         : (baseFare * numberOfPedicabs * 0.15).toFixed(2);
 
-    // Zoom two levels closer once the pickup pin is known.
-    const mapZoom = pickupCoordinates ? 16 : 14;
+    // Zoom two levels closer once the pickup pin is known
+    const mapZoom = pickupCoordinates && !dropoffCoordinates ? 16 : 14;
+    console.log(pickupCoordinates && !dropoffCoordinates ? "Zoom 16" : "Zoom unknown or 14");
+
+    const fitBothLocations = useCallback(() => {
+        if (!mapRef.current || !pickupCoordinates || !dropoffCoordinates) return;
+
+        const bounds = new window.google.maps.LatLngBounds();
+        bounds.extend(pickupCoordinates);
+        bounds.extend(dropoffCoordinates);
+        mapRef.current.fitBounds(bounds, 48);
+    }, [pickupCoordinates, dropoffCoordinates]);
+
+    // Refit after either selected location changes; do nothing until both exist.
+    useEffect(() => {
+        fitBothLocations();
+    }, [fitBothLocations]);
 
     useEffect(() => {
         console.log("useEffect ran");
@@ -443,11 +461,9 @@ function FareCalculator() {
                     
                     ( <>
                             <section className="manual-location-panel">
-                                <h2 className="manual-location-panel-title">Manually enter Pickup and Dropoff locations</h2>
+                                <h2 className="manual-location-panel-title">Manual Pickup / Dropoff locations</h2>
 
                                 <div className="manual-location-panel-inputs">
-
-
 
                                     {/* <AutocompleteForCairns
                                         placeholder="Enter Pick Up Location.."
@@ -463,7 +479,6 @@ function FareCalculator() {
                                         onPlaceSelected={handleDropoffPlaceChanged}
                                         onInputChange={handleUserManuallyEditingDropoff}
                                     /> */}
-
 
                             <div>
                                 {/* Restore selected addresses when the calculator inputs remount. */}
@@ -505,7 +520,7 @@ function FareCalculator() {
 
                             <section className="quick-locations-panel">
                                 <h2 className="quick-locations-panel-title">
-                                    {pickupSelected ? "Choose A Popular Dropoff Location" : "Choose A Popular Pickup Location"}
+                                    {pickupSelected ? "Popular Dropoff Locations" : "Popular Pickup Locations"}
                                 </h2>
 
                                 <div className="quick-locations-panel-options">
@@ -532,6 +547,13 @@ function FareCalculator() {
             <div className={`map-frame ${!fareCalculationModeSelected ? "map-frame-preloaded" : ""}`}>
                 {mapsReady && <GoogleMap
                         mapContainerStyle={mapContainerStyle}
+                        onLoad={(map) => {
+                            mapRef.current = map;
+                            fitBothLocations();
+                        }}
+                        onUnmount={() => {
+                            mapRef.current = null;
+                        }}
                         center={pickupCoordinates || userLocation || mapCenterCoordinates}
                         zoom={mapZoom}
                         options={{
