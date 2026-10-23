@@ -1,4 +1,7 @@
 - start by saying hello
-- Before making changes, explain your plan in a concise manner.
 - add brief comments to sections of code you add / edit
-- do not delete any comments. only modify comments slightly and appropriately if needed based on code changes you make. if i have added verbose comments don't try to make them less verbose.
+- ADD COMMENTS WHEN YOU ADD MORE THAN A FEW LINES OF CODE
+- do not delete any comments
+- only modify comments slightly and appropriately if REALLY needed AND only when related to changes you made in this current task
+- don't try to make existing verbose comments less verbose
+- After making changes and finishing your task, explain your change and use code to show specific parts of the code you changed.

@@ -196,6 +196,7 @@ function AutocompleteForCairns({ placeholder, disabled = false, autocompleteInst
     // reopen it after the user dismissed it.
     return (
         <div className="places-autocomplete-container">
+            {/* Select the full address on click so it can be replaced quickly. */}
             <input
                 type="text"
                 className="custom-input"
@@ -203,6 +204,7 @@ function AutocompleteForCairns({ placeholder, disabled = false, autocompleteInst
                 disabled={disabled}
                 value={displayedInputValue}
                 onChange={handleInputChange}
+                onClick={(event) => event.currentTarget.select()}
                 onKeyDown={(event) => {
                     if (event.key === "Escape") {
                         requestSequenceRef.current += 1;
@@ -212,6 +214,17 @@ function AutocompleteForCairns({ placeholder, disabled = false, autocompleteInst
                 aria-autocomplete="list"
                 aria-expanded={suggestions.length > 0}
             />
+            {displayedInputValue && !disabled && (
+                <button
+                    type="button"
+                    className="places-autocomplete-clear-button"
+                    aria-label="Clear location text"
+                    onMouseDown={(event) => event.preventDefault()}
+                    onClick={() => setInputValue("")}
+                >
+                    ×
+                </button>
+            )}
             {suggestions.length > 0 && (
                 <ul className="places-autocomplete-suggestions" role="listbox">
                     {suggestions.map((suggestion) => {
